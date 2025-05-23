@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { KafkaProducerService } from '../../libs/kafka/kafka.service';
+import { KafkaService } from '../../libs/kafka/kafka.service';
 
 @Injectable()
 export class AppService {
-  constructor(private readonly kafka: KafkaProducerService) {}
+  constructor(private readonly kafka: KafkaService) {}
 
   startBuilding() {
     this.kafka.emit('village.building.started', {

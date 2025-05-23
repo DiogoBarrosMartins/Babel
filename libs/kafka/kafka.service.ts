@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Kafka } from 'kafkajs';
 
 @Injectable()
-export class KafkaProducerService implements OnModuleInit {
+export class KafkaService implements OnModuleInit {
   private kafka = new Kafka({
     brokers: [process.env.KAFKA_BROKER || 'redpanda:9092'],
   });

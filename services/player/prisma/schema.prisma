@@ -6,5 +6,14 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("PLAYER_DATABASE_URL")
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt  DateTime
 }
