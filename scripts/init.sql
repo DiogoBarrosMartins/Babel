@@ -1,0 +1,2 @@
+CREATE DATABASE player;
+CREATE DATABASE village;

@@ -1,0 +1,65 @@
+services:
+  db:
+    image: postgres:15
+    container_name: db
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  redpanda:
+    image: redpandadata/redpanda:latest
+    container_name: redpanda
+    ports:
+      - 9092:9092
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp=1
+      - --memory=512M
+      - --reserve-memory=0M
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+
+  player:
+    build:
+      context: ../
+      dockerfile: docker/player/Dockerfile.local
+    container_name: player
+    depends_on:
+      - db
+      - redpanda
+    env_file:
+      - ../services/player/.env
+    ports:
+      - 3001:3001
+    command: sh -c "exec yarn start:player:dev"
+    volumes:
+      - ../:/app
+
+  village:
+    build:
+      context: ../
+      dockerfile: docker/village/Dockerfile.local
+    container_name: village
+    depends_on:
+      - db
+      - redpanda
+    env_file:
+      - ../services/village/.env
+    ports:
+      - 3002:3002
+    command: sh -c "exec yarn start:village:dev"
+    volumes:
+      - ../:/app
+
+volumes:
+  pgdata:
