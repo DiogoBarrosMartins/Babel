@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   output        = "../../../node_modules/.prisma/client"
   binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
 }
@@ -7,4 +7,29 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum TileType {
+  VILLAGE
+  OUTPOST
+  EMPTY
+  SHRINE
+}
+
+enum EntityType {
+  VILLAGE
+  OUTPOST
+  SHRINE
+}
+
+model Tile {
+  x        Int
+  y        Int
+  type     TileType
+  entityId String
+  entity   EntityType
+  raceId   String?
+  metadata Json?
+
+  @@unique([x, y])
 }
