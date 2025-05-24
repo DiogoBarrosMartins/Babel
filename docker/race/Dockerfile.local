@@ -6,10 +6,10 @@ COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
 COPY tsconfig.json nest-cli.json ./
-COPY services/player ./services/player
-COPY services/player/prisma ./services/player/prisma
+COPY services/race ./services/race
+COPY services/race/prisma ./services/race/prisma
 
-RUN yarn prisma generate --schema=services/player/prisma/schema.prisma
+RUN yarn prisma generate --schema=services/race/prisma/schema.prisma
 
 FROM node:23-bookworm-slim
 WORKDIR /app
@@ -20,4 +20,4 @@ RUN apt-get update \
 
 COPY --from=builder /app ./
 
-CMD ["sh","-c","yarn prisma generate --schema=services/player/prisma/schema.prisma && yarn start:player:dev"]
+CMD ["sh","-c","yarn prisma generate --schema=services/race/prisma/schema.prisma && yarn start:race:dev"]

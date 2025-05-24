@@ -34,16 +34,51 @@ services:
       context: ../
       dockerfile: docker/player/Dockerfile.local
     container_name: player
-    depends_on:
-      - db
-      - redpanda
+    working_dir: /app
+    command: >
+      sh -c "yarn prisma generate --schema=services/player/prisma/schema.prisma &&
+             yarn start:player:dev"
     env_file:
       - ../services/player/.env
     ports:
       - 3001:3001
-    command: sh -c "exec yarn start:player:dev"
     volumes:
       - ../:/app
+      - player_node_modules:/app/node_modules
+
+  race:
+    build:
+      context: ../
+      dockerfile: docker/race/Dockerfile.local
+    container_name: race
+    working_dir: /app
+    command: >
+      sh -c "yarn prisma generate --schema=services/race/prisma/schema.prisma &&
+             yarn start:race:dev"
+    env_file:
+      - ../services/race/.env
+    ports:
+      - 3003:3003
+    volumes:
+      - ../:/app
+      - race_node_modules:/app/node_modules
+
+  world:
+    build:
+      context: ../
+      dockerfile: docker/world/Dockerfile.local
+    container_name: world
+    working_dir: /app
+    command: >
+      sh -c "yarn prisma generate --schema=services/world/prisma/schema.prisma &&
+             yarn start:world:dev"
+    env_file:
+      - ../services/world/.env
+    ports:
+      - 3005:3005
+    volumes:
+      - ../:/app
+      - world_node_modules:/app/node_modules
 
   village:
     build:
@@ -57,9 +92,18 @@ services:
       - ../services/village/.env
     ports:
       - 3002:3002
-    command: sh -c "exec yarn start:village:dev"
+    working_dir: /app
+    command: >
+      sh -c
+      "yarn prisma generate --schema=services/village/prisma/schema.prisma &&
+       yarn start:village:dev"
     volumes:
       - ../:/app
+      - village_node_modules:/app/node_modules
 
 volumes:
   pgdata:
+  player_node_modules:
+  village_node_modules:
+  race_node_modules:
+  world_node_modules:

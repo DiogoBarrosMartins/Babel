@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { KafkaModule } from '../../libs/kafka/kafka.module';
 import { join } from 'path';
-import { PlayerModule } from './modules/player/player.module';
+import { RaceModule } from './modules/race/race.module';
 
 @Module({
   imports: [
@@ -13,7 +13,7 @@ import { PlayerModule } from './modules/player/player.module';
       isGlobal: true,
     }),
     KafkaModule,
-    PlayerModule,
+    RaceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

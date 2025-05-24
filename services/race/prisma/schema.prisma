@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+  output        = "../../../node_modules/.prisma/client"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Race {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  traits      Json
+  hubX        Int?
+  hubY        Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  outposts Outpost[]
+}
+
+model Outpost {
+  
+  id        String   @id @default(uuid())
+  raceId    String
+  race      Race     @relation(fields: [raceId], references: [id], onDelete: Cascade)  // ← opposite side
+  name      String
+  type      String   // e.g. “Watchtower”, “Mine”, “Shrine”
+  x         Int?
+  y         Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([raceId])
+}
+

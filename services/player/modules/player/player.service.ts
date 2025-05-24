@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
-import { KafkaService } from 'libs/kafka/kafka.service';
+import { KafkaService } from '../../../../libs/kafka/kafka.service';
 
 @Injectable()
 export class PlayerService {
