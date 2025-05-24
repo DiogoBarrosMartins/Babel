@@ -26,8 +26,6 @@
 | `player`           | Player accounts, registration, profile 
 | `village`          | Cities, buildings, production queues 
 | `resource`  | Economy, resource generation/spending 
-| `combat`  | Stateless battle resolution (delegates to boardgame engine) 
-| `boardgame`  | Skill-based mini-games: duels, puzzles, card games, etc. 
 | `map`      | Tile ownership, zones, world state 
 | `notification`  | Real-time events: battle reports, invites, system messages 
 | `gateway`  | API gateway or GraphQL+WebSocket bridge for frontend 
