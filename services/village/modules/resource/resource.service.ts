@@ -6,7 +6,7 @@ interface Resources extends Record<string, number> {
   wood: number;
   clay: number;
   iron: number;
-  crop: number;
+  grain: number;
 }
 
 @Injectable()
@@ -31,13 +31,13 @@ export class ResourceService {
       wood: 0,
       clay: 0,
       iron: 0,
-      crop: 0,
+      grain: 0,
     };
     const rates = (village.resourceProductionRates as unknown as Resources) ?? {
       wood: 0,
       clay: 0,
       iron: 0,
-      crop: 0,
+      grain: 0,
     };
 
     const now = new Date();
@@ -48,7 +48,7 @@ export class ResourceService {
       wood: Math.min(amounts.wood + elapsedSec * (rates.wood / 3600), 800),
       clay: Math.min(amounts.clay + elapsedSec * (rates.clay / 3600), 800),
       iron: Math.min(amounts.iron + elapsedSec * (rates.iron / 3600), 800),
-      crop: Math.min(amounts.crop + elapsedSec * (rates.crop / 3600), 800),
+      grain: Math.min(amounts.grain + elapsedSec * (rates.grain / 3600), 800),
     };
 
     await this.prisma.village.update({

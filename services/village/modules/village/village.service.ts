@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateVillageDto } from './dto/create-village.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { KafkaService } from '../../../../libs/kafka/kafka.service';
@@ -78,10 +78,17 @@ export class VillageService {
   }
 
   async findByPlayer(playerId: string): Promise<Village[]> {
-    const village = this.resourceService.getResources(playerId);
-    if (!village) {
-      throw new Error(`No village found for player ${playerId}`);
+    const villages = await this.prisma.village.findMany({
+      where: { playerId },
+    });
+    if (villages.length === 0) {
+      throw new NotFoundException(`No villages found for player ${playerId}`);
     }
+
+    await Promise.all(
+      villages.map((v) => this.resourceService.getResources(v.id)),
+    );
+
     return this.prisma.village.findMany({
       where: { playerId },
     });

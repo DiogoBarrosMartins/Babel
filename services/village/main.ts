@@ -11,7 +11,7 @@ async function bootstrap() {
 
   const kafkaBroker = configService.getOrThrow<string>('KAFKA_BROKER');
   const kafkaGroup = configService.getOrThrow<string>('KAFKA_GROUP');
-  const port = configService.get<number>('PORT') || 3000;
+  const port = configService.get<number>('APP_PORT') || 3002;
 
   const config = new DocumentBuilder()
     .setTitle('Village Service')

@@ -25,6 +25,4 @@
     "src/**/*.ts",
     "node_modules/.prisma/client/**/*.d.ts"
   ],
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
 }
