@@ -1,42 +1,30 @@
+import { Controller, Get, Param } from '@nestjs/common';
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiOkResponse,
+} from '@nestjs/swagger';
 import { VillageService } from './village.service';
-import { CreateVillageDto } from './dto/create-village.dto';
-import { UpdateVillageDto } from './dto/update-village.dto';
+import { Village } from '@prisma/client';
 
-@Controller('village')
+@ApiTags('Villages')
+@Controller('villages')
 export class VillageController {
   constructor(private readonly villageService: VillageService) {}
 
-  @Post()
-  create(@Body() createVillageDto: CreateVillageDto) {
-    return this.villageService.create(createVillageDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.villageService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.villageService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateVillageDto: UpdateVillageDto) {
-    return this.villageService.update(+id, updateVillageDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.villageService.remove(id);
+  @Get('player/:playerId')
+  @ApiOperation({ summary: 'Get all villages for a given player' })
+  @ApiParam({
+    name: 'playerId',
+    description: 'UUID of the player whose villages you want to fetch',
+    type: String,
+  })
+  @ApiOkResponse({
+    description: 'Array of villages owned by that player',
+    isArray: true,
+  })
+  async findByPlayer(@Param('playerId') playerId: string): Promise<Village[]> {
+    return this.villageService.findByPlayer(playerId);
   }
 }

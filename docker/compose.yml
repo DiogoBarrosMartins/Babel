@@ -42,9 +42,6 @@ services:
       - ../services/player/.env
     ports:
       - 3001:3001
-    # Optional: mount source code only if you need hot-reloading
-    # volumes:
-    #   - ../:/app:cached
 
   race:
     build:
@@ -59,8 +56,6 @@ services:
       - ../services/race/.env
     ports:
       - 3003:3003
-    # volumes:
-    #   - ../:/app:cached
 
   world:
     build:
@@ -75,8 +70,6 @@ services:
       - ../services/world/.env
     ports:
       - 3005:3005
-    # volumes:
-    #   - ../:/app:cached
 
   village:
     build:
@@ -95,8 +88,6 @@ services:
       sh -c
       "yarn prisma generate --schema=services/village/prisma/schema.prisma &&
        yarn start:village:dev"
-    # volumes:
-    #   - ../:/app:cached
 
 volumes:
   pgdata:

@@ -23,14 +23,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "docker": "docker compose -f docker/compose.yml down && docker compose -f docker/compose.yml up -d --build",
-    "prisma:client": "npx prisma generate",
+    "prisma:client": "npx prisma generate --schema=prisma/schema.prisma",
     "prisma:status": "npx prisma db pull",
-    "prisma:seed": "ts-node prisma/seed.ts",
-    "prisma:migrate:player": "npx prisma migrate dev --name init --schema=services/player/prisma/schema.prisma",
-    "prisma:migrate:village": "npx prisma migrate dev --name init --schema=services/village/prisma/schema.prisma",
-    "prisma:migrate:race": "npx prisma migrate dev --name init --schema=services/race/prisma/schema.prisma",
-    "prisma:migrate:world": "npx prisma migrate dev --name init --schema=services/world/prisma/schema.prisma",
-    "prisma:migrate": "yarn prisma:migrate:player && yarn prisma:migrate:village && yarn prisma:migrate:race && yarn prisma:migrate:world"
+    "prisma:seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11",

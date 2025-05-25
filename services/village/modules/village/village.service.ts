@@ -1,15 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateVillageDto } from './dto/create-village.dto';
-import { UpdateVillageDto } from './dto/update-village.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { KafkaService } from '../../../../libs/kafka/kafka.service';
 import { v4 as uuidv4 } from 'uuid';
+import { Village } from '@prisma/client';
+import { ResourceService } from '../resource/resource.service';
 
 @Injectable()
 export class VillageService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly kafka: KafkaService,
+    private readonly resourceService: ResourceService,
   ) {}
 
   async create(dto: CreateVillageDto) {
@@ -42,7 +44,6 @@ export class VillageService {
         y: data.y,
         name: data.name,
 
-        // Default resource values
         resourceAmounts: {
           wood: 500,
           clay: 500,
@@ -63,7 +64,6 @@ export class VillageService {
       id: village.id,
       name: village.name,
       playerId: village.playerId,
-      race: village.race,
       x: village.x,
       y: village.y,
     });
@@ -77,23 +77,14 @@ export class VillageService {
     return this.prisma.village.findMany();
   }
 
-  async findOne(id: string) {
-    const v = await this.prisma.village.findUnique({ where: { id } });
-    if (!v) throw new NotFoundException(`Village ${id} not found`);
-    return v;
-  }
-
-  async update(id: number, data: UpdateVillageDto) {
-    const village = await this.prisma.village.update({
-      where: { id },
-      data,
+  async findByPlayer(playerId: string): Promise<Village[]> {
+    const village = this.resourceService.getResources(playerId);
+    if (!village) {
+      throw new Error(`No village found for player ${playerId}`);
+    }
+    return this.prisma.village.findMany({
+      where: { playerId },
     });
-    await this.kafka.emit('village.updated', {
-      id: village.id,
-      name: village.name,
-      updatedAt: village.updatedAt,
-    });
-    return village;
   }
 
   async remove(id: string) {
