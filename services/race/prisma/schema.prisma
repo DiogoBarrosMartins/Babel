@@ -26,9 +26,9 @@ model Outpost {
   
   id        String   @id @default(uuid())
   raceId    String
-  race      Race     @relation(fields: [raceId], references: [id], onDelete: Cascade)  // ← opposite side
+  race      Race     @relation(fields: [raceId], references: [id], onDelete: Cascade)
   name      String
-  type      String   // e.g. “Watchtower”, “Mine”, “Shrine”
+  type      String
   x         Int?
   y         Int?
   createdAt DateTime @default(now())

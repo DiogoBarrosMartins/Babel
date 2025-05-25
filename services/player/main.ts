@@ -1,4 +1,3 @@
-// main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -6,11 +5,10 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule); // <-- this exposes HTTP
+  const app = await NestFactory.create(AppModule);
 
   const configService = app.get(ConfigService);
 
-  // Swagger setup
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Player Service')
     .setDescription('Player API documentation')
@@ -18,9 +16,8 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api', app, document); // access at /api
+  SwaggerModule.setup('api', app, document);
 
-  // Kafka microservice
   const kafkaBroker = configService.getOrThrow<string>('KAFKA_BROKER');
   const kafkaGroup = configService.getOrThrow<string>('KAFKA_GROUP');
 

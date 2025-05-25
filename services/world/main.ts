@@ -12,7 +12,6 @@ async function bootstrap() {
   const kafkaGroup = configService.getOrThrow<string>('KAFKA_GROUP');
   const port = configService.get<number>('APP_PORT') || 3005;
 
-  // Swagger setup
   const swaggerConfig = new DocumentBuilder()
     .setTitle('World Service')
     .setDescription('World microservice API documentation')
@@ -25,7 +24,6 @@ async function bootstrap() {
   await httpApp.listen(port);
   console.log(`🌍 HTTP app running on http://localhost:${port}/api`);
 
-  // Kafka microservice
   const kafkaApp = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {

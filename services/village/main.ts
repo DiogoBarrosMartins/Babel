@@ -5,7 +5,6 @@ import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
-  // Create the HTTP app (for Swagger + potential REST endpoints)
   const httpApp = await NestFactory.create(AppModule);
 
   const configService = httpApp.get(ConfigService);
@@ -14,7 +13,6 @@ async function bootstrap() {
   const kafkaGroup = configService.getOrThrow<string>('KAFKA_GROUP');
   const port = configService.get<number>('PORT') || 3000;
 
-  // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('Village Service')
     .setDescription('Village microservice API documentation')
@@ -27,7 +25,6 @@ async function bootstrap() {
   await httpApp.listen(port);
   console.log(`HTTP app running on http://localhost:${port}/api`);
 
-  // Create the Kafka microservice
   const kafkaApp = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
