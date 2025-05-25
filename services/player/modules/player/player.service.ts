@@ -14,12 +14,12 @@ export class PlayerService {
     const player = await this.prisma.player.create({ data: dto });
 
     await this.kafka.emit('player.created', {
-      id: player.id,
-      username: player.username,
-      email: player.email,
-      createdAt: player.createdAt,
+      playerId: player.id,
+      playerName: player.username,
+      race: player.race,
+      name: 'Main Village',
     });
-
+    console.log(`Player ${player.username} created with ID ${player}`);
     return player;
   }
 

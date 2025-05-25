@@ -3,6 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { join } from 'path';
+import { KafkaController } from './kafka/kafka.controller';
+import { VillageModule } from './modules/village/village.module';
+import { KafkaModule } from '../../libs/kafka/kafka.module';
 
 @Module({
   imports: [
@@ -10,9 +13,11 @@ import { join } from 'path';
       envFilePath: join(__dirname, '.env'),
       isGlobal: true,
     }),
+    KafkaModule,
+    VillageModule,
   ],
   providers: [AppService],
-  controllers: [AppController],
+  controllers: [AppController, KafkaController],
   exports: [AppService],
 })
 export class AppModule {}

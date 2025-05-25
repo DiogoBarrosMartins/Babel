@@ -8,6 +8,7 @@ RUN yarn install --frozen-lockfile
 COPY tsconfig.json nest-cli.json ./
 COPY services/world ./services/world
 COPY services/world/prisma ./services/world/prisma
+COPY libs ./libs
 
 RUN yarn prisma generate --schema=services/world/prisma/schema.prisma
 

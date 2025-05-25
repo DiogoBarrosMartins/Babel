@@ -8,6 +8,5 @@ export class AppController {
   @EventPattern('village.building.started')
   handleBuildingStart(@Payload() data: any) {
     console.log('Building started:', data);
-    // TODO: check resources, start build, emit success
   }
 }

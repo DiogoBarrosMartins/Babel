@@ -9,6 +9,8 @@ COPY tsconfig.json nest-cli.json ./
 COPY services/race ./services/race
 COPY services/race/prisma ./services/race/prisma
 
+COPY libs ./libs
+
 RUN yarn prisma generate --schema=services/race/prisma/schema.prisma
 
 FROM node:23-bookworm-slim

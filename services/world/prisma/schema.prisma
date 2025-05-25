@@ -16,20 +16,15 @@ enum TileType {
   SHRINE
 }
 
-enum EntityType {
-  VILLAGE
-  OUTPOST
-  SHRINE
-}
 
 model Tile {
-  x        Int
-  y        Int
-  type     TileType
-  entityId String
-  entity   EntityType
-  raceId   String?
-  metadata Json?
-
-  @@unique([x, y])
+  id         String   @id @default(uuid())
+  x          Int
+  y          Int
+  name       String
+  type       String
+  race       String
+  playerId   String
+  playerName String
+  metadata   Json?
 }

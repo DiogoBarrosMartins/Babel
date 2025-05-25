@@ -1,18 +1,25 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  Ctx,
+  KafkaContext,
+  MessagePattern,
+  Payload,
+} from '@nestjs/microservices';
 import { WorldService } from '../modules/world/world.service';
 
 @Controller()
-export class WorldKafkaController {
-  constructor(private readonly worldService: WorldService) {}
+export class KafkaController {
+  constructor(private readonly svc: WorldService) {}
 
-  @MessagePattern('village.created')
-  async handleVillageCreated(@Payload() message: any) {
-    await this.worldService.addVillageToTile(message.value);
-  }
+  @MessagePattern('world.village-tile.requested')
+  handleVillageTileRequest(
+    @Payload() payload: any,
+    @Ctx() context: KafkaContext,
+  ) {
+    console.log('📨 Kafka payload raw:', context.getMessage().value.toString());
+    console.log('✅ Parsed payload:', payload);
+    console.log('📦 Received payload on world service:', payload);
 
-  @MessagePattern('outpost.created')
-  async handleOutpostCreated(@Payload() message: any) {
-    await this.worldService.addOutpostToTile(message.value);
+    return this.svc.addVillageToTile(payload);
   }
 }

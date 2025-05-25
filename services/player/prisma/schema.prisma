@@ -15,5 +15,6 @@ model Player {
   email     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  deletedAt  DateTime
+  deletedAt  DateTime?
+  race String
 }

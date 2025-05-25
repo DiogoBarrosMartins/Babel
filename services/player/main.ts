@@ -1,30 +1,42 @@
+// main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Transport, MicroserviceOptions } from '@nestjs/microservices';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-  const appContext = await NestFactory.createApplicationContext(AppModule);
-  const configService = appContext.get(ConfigService);
+  const app = await NestFactory.create(AppModule); // <-- this exposes HTTP
 
+  const configService = app.get(ConfigService);
+
+  // Swagger setup
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Player Service')
+    .setDescription('Player API documentation')
+    .setVersion('1.0')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api', app, document); // access at /api
+
+  // Kafka microservice
   const kafkaBroker = configService.getOrThrow<string>('KAFKA_BROKER');
   const kafkaGroup = configService.getOrThrow<string>('KAFKA_GROUP');
 
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
-      transport: Transport.KAFKA,
-      options: {
-        client: {
-          brokers: [kafkaBroker],
-        },
-        consumer: {
-          groupId: kafkaGroup,
-        },
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.KAFKA,
+    options: {
+      client: {
+        brokers: [kafkaBroker],
+      },
+      consumer: {
+        groupId: kafkaGroup,
       },
     },
-  );
+  });
 
-  await app.listen();
+  await app.startAllMicroservices();
+  await app.listen(3001);
 }
 bootstrap();

@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output        = "../node_modules/.prisma/client"
+  output        = "../../../node_modules/.prisma/client"
   binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
 }
 
@@ -17,5 +17,5 @@ model Village {
   y         Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
+  playerName String
 }

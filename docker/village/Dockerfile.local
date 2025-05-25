@@ -5,13 +5,14 @@ WORKDIR /app
 RUN apt-get update && apt-get upgrade -y
 
 COPY package.json yarn.lock ./
-
 RUN yarn install --frozen-lockfile
 
 COPY tsconfig.json .
 COPY nest-cli.json .
 COPY services/village ./services/village
 COPY services/village/prisma ./services/village/prisma
+
+COPY libs ./libs
 
 RUN yarn prisma:client --schema=services/village/prisma/schema.prisma
 
@@ -22,5 +23,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app ./
+
+# 👇 Esta linha resolve o problema de @nestjs/swagger
+ENV NODE_PATH=/app/node_modules
 
 CMD ["yarn", "start:village:dev"]

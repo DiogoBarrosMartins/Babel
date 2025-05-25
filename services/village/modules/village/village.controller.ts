@@ -37,6 +37,6 @@ export class VillageController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.villageService.remove(+id);
+    return this.villageService.remove(id);
   }
 }

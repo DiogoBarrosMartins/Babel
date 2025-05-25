@@ -7,9 +7,13 @@ export class CreateVillageDto {
   @IsUUID()
   playerId: string;
 
+  playerName: string;
+
   @IsOptional()
   @IsInt()
   x?: number;
+
+  race: string;
 
   @IsOptional()
   @IsInt()
