@@ -9,6 +9,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum RaceName {
+  HUMAN
+  ORC
+  ELF
+  DWARF
+  UNDEAD
+}
+
 model Race {
   id          String   @id @default(uuid())
   name        String   @unique

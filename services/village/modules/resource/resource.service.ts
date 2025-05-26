@@ -27,13 +27,13 @@ export class ResourceService {
       },
     });
 
-    const amounts = (village.resourceAmounts as unknown as Resources) ?? {
+    const amounts = (village.resourceAmounts as Resources) ?? {
       wood: 0,
       clay: 0,
       iron: 0,
       grain: 0,
     };
-    const rates = (village.resourceProductionRates as unknown as Resources) ?? {
+    const rates = (village.resourceProductionRates as Resources) ?? {
       wood: 0,
       clay: 0,
       iron: 0,
@@ -66,5 +66,32 @@ export class ResourceService {
     });
 
     return newResources;
+  }
+
+  async deductResources(villageId: string, cost: any): Promise<void> {
+    const village = await this.prisma.village.findUniqueOrThrow({
+      where: { id: villageId },
+      select: { resourceAmounts: true },
+    });
+
+    const currentResources = village.resourceAmounts as unknown as Resources;
+
+    const newResources: Resources = {
+      wood: Math.max(currentResources.wood - (cost.wood || 0), 0),
+      clay: Math.max(currentResources.clay - (cost.clay || 0), 0),
+      iron: Math.max(currentResources.iron - (cost.iron || 0), 0),
+      grain: Math.max(currentResources.grain - (cost.grain || 0), 0),
+    };
+
+    await this.prisma.village.update({
+      where: { id: villageId },
+      data: { resourceAmounts: newResources },
+    });
+
+    await this.kafka.emit('village.resources.deducted', {
+      villageId,
+      cost,
+      newResourceAmounts: newResources,
+    });
   }
 }

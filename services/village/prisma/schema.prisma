@@ -9,6 +9,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum BuildingType {
+  SAWMILL
+  CLAY_PIT
+  IRON_MINE
+  FARM
+  WAREHOUSE
+  GRANARY
+  MARKET
+  BARRACKS
+  STABLE
+  WORKSHOP
+  WALL
+  TOWER
+  SMITHY
+  EMBASSY
+  ACADEMY
+  SHRINE
+}
+
 model Village {
   id        String   @id @default(uuid())
   name      String
@@ -23,4 +42,36 @@ model Village {
   resourceProductionRates  Json     @default("{\"wood\":10,\"clay\":10,\"iron\":10,\"grain\":8}")
   lastCollectedAt         DateTime @default(now())
 
+  buildings Building[] 
+  constructionTasks ConstructionTask[]
+}
+
+model Building {
+   id          String        @id @default(uuid())
+  village     Village       @relation(fields: [villageId], references: [id])
+  villageId   String
+   type        BuildingType
+   level       Int           @default(1)
+   status      String        @default("idle")
+   queuedUntil DateTime?
+   createdAt   DateTime      @default(now())
+   updatedAt   DateTime      @updatedAt
+
+   @@index([villageId])
+}
+
+model ConstructionTask {
+  id            String      @id @default(uuid())
+  village       Village     @relation(fields: [villageId], references: [id])
+  villageId     String
+  buildingId    String?
+  type          BuildingType
+  level         Int
+  status        String      @default("queued")  // queued | in_progress | completed
+  startTime     DateTime
+  endTime       DateTime
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([villageId])
 }

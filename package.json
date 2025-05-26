@@ -28,6 +28,7 @@
     "prisma:seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
+    "@nestjs/bull": "^11.0.2",
     "@nestjs/common": "^11",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11",
@@ -36,9 +37,11 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^11.2.0",
     "@prisma/client": "^6.8.2",
+    "bull": "^4.16.5",
     "class-validator": "^0.14.2",
     "express": "^5.1.0",
     "husky": "^9.1.7",
+    "ioredis": "^5.6.1",
     "kafkajs": "^2.2.4",
     "prisma": "^6.7.0",
     "reflect-metadata": "^0.1.13",

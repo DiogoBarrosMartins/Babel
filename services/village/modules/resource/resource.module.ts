@@ -7,6 +7,6 @@ import { KafkaModule } from '../../../../libs/kafka/kafka.module';
   imports: [KafkaModule],
   controllers: [ResourceController],
   providers: [ResourceService, PrismaService],
-  exports:  [ResourceService],
+  exports: [ResourceService],
 })
 export class ResourceModule {}
