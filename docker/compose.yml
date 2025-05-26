@@ -74,8 +74,9 @@ services:
     container_name: world
     working_dir: /app
     command: >
-      sh -c "yarn prisma generate --schema=services/world/prisma/schema.prisma &&
-      yarn prisma migrate deploy --schema=services/world/prisma/schema.prisma &&
+     sh -c "yarn prisma generate --schema=services/world/prisma/schema.prisma &&
+             yarn prisma migrate reset --force --schema=services/world/prisma/schema.prisma &&
+             yarn prisma migrate dev --name init --schema=services/world/prisma/schema.prisma &&
              yarn start:world:dev"
     env_file:
       - ../services/world/.env

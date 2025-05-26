@@ -4,5 +4,4 @@ export enum Race {
   ELF = 'ELF',
   DWARF = 'DWARF',
   UNDEAD = 'UNDEAD',
-  // …add others as you expand…
 }

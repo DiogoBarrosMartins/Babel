@@ -1,4 +1,3 @@
-// dto/update-building.dto.ts
 import { IsUUID, IsEnum } from 'class-validator';
 import { BuildingType } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';

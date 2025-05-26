@@ -25,7 +25,6 @@ export interface BuildingCost {
   buildTimeSeconds: number;
 }
 
-// Base values and scaling factors per category
 const BASE_COSTS: Record<BuildingType, BuildingCost> = {
   [BuildingType.SAWMILL]: {
     wood: 100,
