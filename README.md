@@ -16,6 +16,7 @@
 | **Docker Compose**  | Container orchestration for local development 
 | **PostgreSQL**      | Relational database per service (isolated schemas) 
 | **WebSockets** (planned) | Real-time gameplay and match sessions 
+| **Redis** BullMQ | To handle construction queues 😎
 
 ---
 
