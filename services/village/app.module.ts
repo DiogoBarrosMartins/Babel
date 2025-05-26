@@ -11,8 +11,9 @@ import { BullModule } from '@nestjs/bull';
 @Module({
   imports: [
     BullModule.forRoot({
-      redis: { host: 'localhost', port: 6379 },
+      redis: { host: 'redis', port: 6379 },
     }),
+
     ConfigModule.forRoot({
       envFilePath: join(__dirname, '.env'),
       isGlobal: true,

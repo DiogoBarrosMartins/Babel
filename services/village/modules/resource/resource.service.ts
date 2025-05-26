@@ -44,11 +44,13 @@ export class ResourceService {
     const last = village.lastCollectedAt;
     const elapsedSec = Math.floor((now.getTime() - last.getTime()) / 1000);
 
+    console.log(elapsedSec);
+
     const newResources: Resources = {
-      wood: Math.min(amounts.wood + elapsedSec * (rates.wood / 3600), 800),
-      clay: Math.min(amounts.clay + elapsedSec * (rates.clay / 3600), 800),
-      iron: Math.min(amounts.iron + elapsedSec * (rates.iron / 3600), 800),
-      grain: Math.min(amounts.grain + elapsedSec * (rates.grain / 3600), 800),
+      wood: amounts.wood + elapsedSec * rates.wood,
+      clay: amounts.clay + elapsedSec * rates.clay,
+      iron: amounts.iron + elapsedSec * rates.iron,
+      grain: amounts.grain + elapsedSec * rates.grain,
     };
 
     await this.prisma.village.update({

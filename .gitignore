@@ -40,3 +40,4 @@ lerna-debug.log*
 .todo
 
 **/node_modules/
+/docker/db/pgdata

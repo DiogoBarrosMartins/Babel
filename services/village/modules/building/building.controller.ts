@@ -1,34 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { BuildingService } from './building.service';
-import { CreateBuildingDto } from './dto/create-building.dto';
-import { UpdateBuildingDto } from './dto/update-building.dto';
+import { UpgradeBuildingDto } from './dto/update-building.dto';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('Buildings')
 @Controller('building')
 export class BuildingController {
   constructor(private readonly buildingService: BuildingService) {}
 
-  @Post()
-  create(@Body() createBuildingDto: CreateBuildingDto) {
-    return this.buildingService.create(createBuildingDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.buildingService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.buildingService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBuildingDto: UpdateBuildingDto) {
-    return this.buildingService.update(+id, updateBuildingDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.buildingService.remove(+id);
+  @Post('upgrade')
+  @ApiOperation({ summary: 'Faz upgrade de um edifício de uma vila' })
+  @ApiResponse({ status: 201, description: 'Construção iniciada com sucesso.' })
+  @ApiResponse({ status: 400, description: 'Parâmetros inválidos.' })
+  async upgrade(@Body() dto: UpgradeBuildingDto) {
+    return this.buildingService.upgradeBuilding(dto.villageId, dto.type);
   }
 }

@@ -25,11 +25,38 @@ export interface BuildingCost {
   buildTimeSeconds: number;
 }
 
+export const BUILDING_PRODUCTION_INCREASES: Record<BuildingType, number[]> = {
+  [BuildingType.SAWMILL]: [2, 3, 4, 5],
+  [BuildingType.CLAY_PIT]: [2, 3, 4, 5],
+  [BuildingType.IRON_MINE]: [2, 3, 4, 5],
+  [BuildingType.FARM]: [2, 3, 4, 5],
+
+  // Os restantes edifícios não afetam produção diretamente
+  [BuildingType.WAREHOUSE]: [],
+  [BuildingType.GRANARY]: [],
+  [BuildingType.MARKET]: [],
+  [BuildingType.BARRACKS]: [],
+  [BuildingType.STABLE]: [],
+  [BuildingType.WORKSHOP]: [],
+  [BuildingType.WALL]: [],
+  [BuildingType.TOWER]: [],
+  [BuildingType.SMITHY]: [],
+  [BuildingType.EMBASSY]: [],
+  [BuildingType.ACADEMY]: [],
+  [BuildingType.SHRINE]: [],
+};
+
 // Define the cost and build time for each level of each building type
 export const BUILDING_COSTS: Record<BuildingType, BuildingCost[]> = {
   [BuildingType.SAWMILL]: [
     { wood: 100, clay: 50, iron: 30, grain: 20, buildTimeSeconds: 60 },
     { wood: 200, clay: 100, iron: 60, grain: 40, buildTimeSeconds: 120 },
+    { wood: 200, clay: 100, iron: 60, grain: 40, buildTimeSeconds: 120 },
+    { wood: 200, clay: 100, iron: 60, grain: 40, buildTimeSeconds: 120 },
+    { wood: 200, clay: 100, iron: 60, grain: 40, buildTimeSeconds: 120 },
+    { wood: 200, clay: 100, iron: 60, grain: 40, buildTimeSeconds: 120 },
+    { wood: 200, clay: 100, iron: 60, grain: 40, buildTimeSeconds: 120 },
+
     // … add more levels as needed
   ],
   [BuildingType.CLAY_PIT]: [
