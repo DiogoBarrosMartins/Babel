@@ -1,12 +1,12 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../../world/prisma/prisma.service';
 import { KafkaService } from '../../../../libs/kafka/kafka.service';
-import { STATIC_RACES } from '../../../../libs/types/race-type';
-import { Prisma } from '@prisma/client';
+import { getStaticRaces } from '../../../../libs/types/race-type';
+import { Prisma, Tile } from '@prisma/client';
 
-const WORLD_SIZE = 420;
+const WORLD_SIZE = 100;
+const HALF_WORLD = Math.floor(WORLD_SIZE / 2);
 const NPC_VILLAGE_COUNT = 20;
-const MAX_PLACEMENT_ATTEMPTS = 5;
 
 enum TileType {
   EMPTY = 'EMPTY',
@@ -28,11 +28,18 @@ enum Zone {
 @Injectable()
 export class WorldService {
   private readonly logger = new Logger(WorldService.name);
+  private readonly reservedTiles = new Set<string>();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly kafka: KafkaService,
   ) {}
+
+  async getAllTiles() {
+    return this.prisma.tile.findMany({
+      select: { x: true, y: true, type: true, race: true, name: true },
+    });
+  }
 
   async onModuleInit(): Promise<void> {
     const existingWorld = await this.prisma.world.findFirst();
@@ -53,8 +60,12 @@ export class WorldService {
       this.logger.warn('⚠️ World already exists. Skipping generation.');
       return;
     }
+
+    await this.prisma.tile.deleteMany({});
+    this.logger.warn('🧹 Old tiles deleted.');
+
     await this.prisma.world.create({
-      data: { name: 'Default World', size: WORLD_SIZE },
+      data: { name: 'Genesis', size: WORLD_SIZE },
     });
 
     this.logger.log('🌍 Starting world generation...');
@@ -68,9 +79,8 @@ export class WorldService {
 
   private async createEmptyTiles() {
     const tiles = [];
-
-    for (let x = 0; x < WORLD_SIZE; x++) {
-      for (let y = 0; y < WORLD_SIZE; y++) {
+    for (let x = -HALF_WORLD; x < HALF_WORLD; x++) {
+      for (let y = -HALF_WORLD; y < HALF_WORLD; y++) {
         tiles.push({
           x,
           y,
@@ -82,12 +92,12 @@ export class WorldService {
         });
       }
     }
-
     await this.prisma.tile.createMany({ data: tiles });
     this.logger.log(`✅ Created ${tiles.length} base tiles.`);
   }
 
   private async placeFactionStructures(): Promise<{ x: number; y: number }[]> {
+    const STATIC_RACES = getStaticRaces(WORLD_SIZE);
     const hubs: { x: number; y: number }[] = [];
 
     for (const race of STATIC_RACES) {
@@ -109,10 +119,6 @@ export class WorldService {
         },
       });
 
-      this.logger.log(
-        `🏰 Hub placed for ${race.name} at (${race.hubX}, ${race.hubY})`,
-      );
-
       for (const outpost of race.outposts) {
         await this.prisma.tile.update({
           where: { x_y: { x: outpost.x, y: outpost.y } },
@@ -127,10 +133,6 @@ export class WorldService {
             },
           },
         });
-
-        this.logger.log(
-          `🏕️ Outpost '${outpost.name}' placed at (${outpost.x}, ${outpost.y})`,
-        );
       }
     }
 
@@ -139,16 +141,14 @@ export class WorldService {
 
   private async generateNpcVillages(hubLocations: { x: number; y: number }[]) {
     for (let i = 0; i < NPC_VILLAGE_COUNT; i++) {
-      const { x, y } = await this.getAvailableCoordinates();
-
+      const { x, y } = await this.getAvailableCoordinates(hubLocations);
       const nearestHub = this.findNearestHub(x, y, hubLocations);
       const distance = this.getDistance(x, y, nearestHub.x, nearestHub.y);
       const zone = this.classifyZone(distance);
-
       const metadata: Prisma.JsonObject = this.getNpcMetadata(zone);
 
-      await this.prisma.tile.updateMany({
-        where: { x, y },
+      await this.prisma.tile.update({
+        where: { x_y: { x, y } },
         data: {
           type: TileType.VILLAGE,
           name: `Bandit Camp ${i + 1}`,
@@ -157,25 +157,84 @@ export class WorldService {
         },
       });
     }
-
     this.logger.log('🎯 Non-player villages created.');
   }
 
-  private async getAvailableCoordinates(): Promise<{ x: number; y: number }> {
-    for (let attempt = 0; attempt < MAX_PLACEMENT_ATTEMPTS; attempt++) {
-      const x = Math.floor(Math.random() * WORLD_SIZE);
-      const y = Math.floor(Math.random() * WORLD_SIZE);
+  private isNearStructure(
+    x: number,
+    y: number,
+    structures: { x: number; y: number }[],
+    minDistance = 5,
+  ): boolean {
+    return structures.some(
+      (struct) => this.getDistance(x, y, struct.x, struct.y) < minDistance,
+    );
+  }
 
-      const tile = await this.prisma.tile.findFirst({
-        where: { x, y },
+  private async findValidTile(
+    isValid: (tile: Tile | null, x: number, y: number) => boolean,
+    maxAttempts = 10,
+  ): Promise<{ x: number; y: number }> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const { x, y } = this.generatePolarCoordinates();
+      if (Math.abs(x) > HALF_WORLD || Math.abs(y) > HALF_WORLD) continue;
+      const key = `${x},${y}`;
+      if (this.reservedTiles.has(key)) continue;
+      const tile = await this.prisma.tile.findUnique({
+        where: { x_y: { x, y } },
       });
-
-      if (tile && tile.type === TileType.EMPTY) {
+      if (isValid(tile, x, y)) {
+        this.reservedTiles.add(key);
         return { x, y };
       }
     }
+    throw new Error('❌ Failed to find valid tile');
+  }
 
-    throw new Error('Failed to find empty tile after several attempts');
+  private async getAvailableCoordinates(
+    hubs: { x: number; y: number }[] = [],
+  ): Promise<{ x: number; y: number }> {
+    return this.findValidTile((tile, x, y) => {
+      return tile?.type === TileType.EMPTY && !this.isNearStructure(x, y, hubs);
+    });
+  }
+
+  private async findEmptyTileNear(
+    originX: number,
+    originY: number,
+  ): Promise<{ x: number; y: number }> {
+    const MAX_RADIUS = 10;
+    for (let radius = 1; radius <= MAX_RADIUS; radius++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        for (let dy = -radius; dy <= radius; dy++) {
+          const x = originX + dx;
+          const y = originY + dy;
+          const key = `${x},${y}`;
+          if (Math.abs(x) > HALF_WORLD || Math.abs(y) > HALF_WORLD) continue;
+          if (this.reservedTiles.has(key)) continue;
+          const tile = await this.prisma.tile.findUnique({
+            where: { x_y: { x, y } },
+          });
+          if (tile && tile.type === TileType.EMPTY) {
+            this.reservedTiles.add(key);
+            return { x, y };
+          }
+        }
+      }
+    }
+    throw new Error('❌ Could not find nearby empty tile');
+  }
+
+  private generatePolarCoordinates(
+    centerX = 0,
+    centerY = 0,
+    maxRadius = HALF_WORLD,
+  ) {
+    const angle = Math.random() * 2 * Math.PI;
+    const radius = Math.sqrt(Math.random()) * maxRadius;
+    const x = Math.round(centerX + radius * Math.cos(angle));
+    const y = Math.round(centerY + radius * Math.sin(angle));
+    return { x, y };
   }
 
   async addVillageToTile(data: {
@@ -185,30 +244,20 @@ export class WorldService {
     name: string;
   }) {
     const { race, playerId, playerName, name } = data;
-
     if (!name || !playerId || !playerName) {
       throw new BadRequestException('Missing required fields in payload');
     }
 
-    // Step 1: Get all outposts of this race
     const outposts = await this.prisma.tile.findMany({
-      where: {
-        type: TileType.OUTPOST,
-        race,
-      },
+      where: { type: TileType.OUTPOST, race },
     });
-
     if (outposts.length === 0) {
       throw new Error(`No outposts found for race "${race}"`);
     }
 
-    // Step 2: Pick one outpost at random
     const origin = outposts[Math.floor(Math.random() * outposts.length)];
-
-    // Step 3: Search for the closest available EMPTY tile around the outpost
     const { x, y } = await this.findEmptyTileNear(origin.x, origin.y);
 
-    // Step 4: Update tile to be a village
     await this.prisma.tile.update({
       where: { x_y: { x, y } },
       data: {
@@ -228,37 +277,9 @@ export class WorldService {
       playerName,
       name,
     });
-
     this.logger.log(
       `✅ Village ${name} created at (${x}, ${y}) for ${playerName}`,
     );
-  }
-  private async findEmptyTileNear(
-    originX: number,
-    originY: number,
-  ): Promise<{ x: number; y: number }> {
-    const MAX_RADIUS = 10;
-
-    for (let radius = 1; radius <= MAX_RADIUS; radius++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        for (let dy = -radius; dy <= radius; dy++) {
-          const x = originX + dx;
-          const y = originY + dy;
-
-          if (x < 0 || y < 0 || x >= WORLD_SIZE || y >= WORLD_SIZE) continue;
-
-          const tile = await this.prisma.tile.findUnique({
-            where: { x_y: { x, y } },
-          });
-
-          if (tile && tile.type === TileType.EMPTY) {
-            return { x, y };
-          }
-        }
-      }
-    }
-
-    throw new Error('❌ Could not find nearby empty tile');
   }
 
   private findNearestHub(
@@ -266,12 +287,12 @@ export class WorldService {
     y: number,
     hubs: { x: number; y: number }[],
   ) {
-    return hubs.reduce((closest, hub) => {
-      return this.getDistance(x, y, hub.x, hub.y) <
-        this.getDistance(x, y, closest.x, closest.y)
+    return hubs.reduce((closest, hub) =>
+      this.getDistance(x, y, hub.x, hub.y) <
+      this.getDistance(x, y, closest.x, closest.y)
         ? hub
-        : closest;
-    }, hubs[0]);
+        : closest,
+    );
   }
 
   private classifyZone(distance: number): Zone {
@@ -283,11 +304,7 @@ export class WorldService {
   private getNpcMetadata(zone: Zone): Prisma.JsonObject {
     switch (zone) {
       case Zone.CORE:
-        return {
-          zone,
-          difficulty: 'EASY',
-          loot: { wood: 100, gold: 50 },
-        };
+        return { zone, difficulty: 'EASY', loot: { wood: 100, gold: 50 } };
       case Zone.MID:
         return {
           zone,
@@ -311,23 +328,19 @@ export class WorldService {
   }
 
   async getTilesAround(x: number, y: number, radius = 20) {
-    if (x < 0 || y < 0 || x >= WORLD_SIZE || y >= WORLD_SIZE) {
+    if (Math.abs(x) > HALF_WORLD || Math.abs(y) > HALF_WORLD) {
       throw new BadRequestException('Invalid coordinates');
     }
 
-    const minX = Math.max(0, x - radius);
-    const maxX = Math.min(WORLD_SIZE - 1, x + radius);
-    const minY = Math.max(0, y - radius);
-    const maxY = Math.min(WORLD_SIZE - 1, y + radius);
-
     const tiles = await this.prisma.tile.findMany({
       where: {
-        x: { gte: minX, lte: maxX },
-        y: { gte: minY, lte: maxY },
+        x: { gte: x - radius, lte: x + radius },
+        y: { gte: y - radius, lte: y + radius },
       },
       select: {
         x: true,
         y: true,
+        name: true,
         type: true,
         race: true,
         playerName: true,

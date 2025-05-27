@@ -5,6 +5,11 @@ import { WorldService } from './world.service';
 export class WorldController {
   constructor(private readonly worldService: WorldService) {}
 
+  @Get('map/raw')
+  async getRawTileMap() {
+    return this.worldService.getAllTiles();
+  }
+
   @Get(':x/:y')
   async getNearbyTiles(
     @Param('x', ParseIntPipe) x: number,

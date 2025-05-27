@@ -31,80 +31,119 @@ export interface StaticRaceData {
   outposts: RaceOutpost[];
 }
 
-export const STATIC_RACES: StaticRaceData[] = [
-  {
-    name: Race.ORC,
-    description: 'Savage warriors from the west.',
-    traits: {},
-    hubX: 10,
-    hubY: 90,
-    hubName: 'Skullcrush Hold',
-    outposts: [
-      { name: 'Wolfclaw Watch', type: OutpostType.FORWARD, x: 12, y: 85 },
-      { name: 'Stonefang Camp', type: OutpostType.RESOURCE, x: 8, y: 88 },
-      { name: 'Bloodhowl Den', type: OutpostType.DEFENSIVE, x: 10, y: 93 },
-      { name: 'Dark Totem Grounds', type: OutpostType.MAGICAL, x: 6, y: 92 },
-      { name: 'Rotfang Ridge', type: OutpostType.NEUTRAL, x: 13, y: 89 },
+function generateUniqueCoordinates(
+  used: Set<string>,
+  centerX: number,
+  centerY: number,
+  spread: number,
+): { x: number; y: number } {
+  let attempts = 0;
+  while (attempts < 100) {
+    const x =
+      centerX + Math.floor(Math.random() * spread) - Math.floor(spread / 2);
+    const y =
+      centerY + Math.floor(Math.random() * spread) - Math.floor(spread / 2);
+    const key = `${x},${y}`;
+    if (!used.has(key)) {
+      used.add(key);
+      console.log(`📍 Coordinates reserved at (${x}, ${y})`);
+      return { x, y };
+    }
+    attempts++;
+  }
+  throw new Error('Failed to generate unique coordinates');
+}
+
+export function getStaticRaces(worldSize: number): StaticRaceData[] {
+  const radius = Math.floor(worldSize / 3);
+  const centerX = 0;
+  const centerY = 0;
+  const used = new Set<string>();
+
+  const descriptions = {
+    [Race.ORC]: 'Savage warriors from the west... (Orc desc)',
+    [Race.HUMAN]: 'Versatile and ambitious settlers... (Human desc)',
+    [Race.ELF]: 'Ancient guardians of nature... (Elf desc)',
+    [Race.DWARF]: 'Master craftsmen of the mountains... (Dwarf desc)',
+    [Race.UNDEAD]: 'The relentless forces of decay... (Undead desc)',
+  };
+
+  const hubNames = {
+    [Race.ORC]: 'Skullcrush Hold',
+    [Race.HUMAN]: 'Citadel of Dawn',
+    [Race.ELF]: 'Silvergrove',
+    [Race.DWARF]: 'Irondeep Bastion',
+    [Race.UNDEAD]: 'Cryptspire',
+  };
+
+  const raceOutpostNames = {
+    [Race.ORC]: [
+      ['Wolfclaw Watch', OutpostType.FORWARD],
+      ['Stonefang Camp', OutpostType.RESOURCE],
+      ['Bloodhowl Den', OutpostType.DEFENSIVE],
+      ['Dark Totem Grounds', OutpostType.MAGICAL],
+      ['Rotfang Ridge', OutpostType.NEUTRAL],
     ],
-  },
-  {
-    name: Race.HUMAN,
-    description: 'Versatile and ambitious settlers.',
-    traits: {},
-    hubX: 50,
-    hubY: 10,
-    hubName: 'Citadel of Dawn',
-    outposts: [
-      { name: 'Riverwatch Keep', type: OutpostType.RESOURCE, x: 52, y: 12 },
-      { name: 'Eastguard Tower', type: OutpostType.FORWARD, x: 48, y: 8 },
-      { name: 'Northwall Post', type: OutpostType.DEFENSIVE, x: 51, y: 13 },
-      { name: 'Sanctum Hill', type: OutpostType.MAGICAL, x: 47, y: 11 },
-      { name: 'Briarpoint', type: OutpostType.NEUTRAL, x: 53, y: 9 },
+    [Race.HUMAN]: [
+      ['Riverwatch Keep', OutpostType.RESOURCE],
+      ['Eastguard Tower', OutpostType.FORWARD],
+      ['Northwall Post', OutpostType.DEFENSIVE],
+      ['Sanctum Hill', OutpostType.MAGICAL],
+      ['Briarpoint', OutpostType.NEUTRAL],
     ],
-  },
-  {
-    name: Race.ELF,
-    description: 'Ancient guardians of nature and magic.',
-    traits: {},
-    hubX: 80,
-    hubY: 80,
-    hubName: 'Silvergrove',
-    outposts: [
-      { name: 'Whisperwind Glade', type: OutpostType.RESOURCE, x: 82, y: 78 },
-      { name: 'Moonlight Outpost', type: OutpostType.FORWARD, x: 78, y: 79 },
-      { name: 'Thistlewood Watch', type: OutpostType.DEFENSIVE, x: 81, y: 83 },
-      { name: 'Crystal Bloom', type: OutpostType.MAGICAL, x: 77, y: 81 },
-      { name: 'Evershade Camp', type: OutpostType.NEUTRAL, x: 84, y: 80 },
+    [Race.ELF]: [
+      ['Whisperwind Glade', OutpostType.RESOURCE],
+      ['Moonlight Outpost', OutpostType.FORWARD],
+      ['Thistlewood Watch', OutpostType.DEFENSIVE],
+      ['Crystal Bloom', OutpostType.MAGICAL],
+      ['Evershade Camp', OutpostType.NEUTRAL],
     ],
-  },
-  {
-    name: Race.DWARF,
-    description: 'Master craftsmen of the mountains.',
-    traits: {},
-    hubX: 20,
-    hubY: 20,
-    hubName: 'Irondeep Bastion',
-    outposts: [
-      { name: 'Hammerfall Outpost', type: OutpostType.RESOURCE, x: 22, y: 21 },
-      { name: 'Thorin’s Watch', type: OutpostType.FORWARD, x: 18, y: 19 },
-      { name: 'Stonehelm Post', type: OutpostType.DEFENSIVE, x: 20, y: 23 },
-      { name: 'Molten Forge', type: OutpostType.MAGICAL, x: 17, y: 22 },
-      { name: 'Greyrock Ridge', type: OutpostType.NEUTRAL, x: 23, y: 20 },
+    [Race.DWARF]: [
+      ['Hammerfall Outpost', OutpostType.RESOURCE],
+      ['Thorin’s Watch', OutpostType.FORWARD],
+      ['Stonehelm Post', OutpostType.DEFENSIVE],
+      ['Molten Forge', OutpostType.MAGICAL],
+      ['Greyrock Ridge', OutpostType.NEUTRAL],
     ],
-  },
-  {
-    name: Race.UNDEAD,
-    description: 'The relentless forces of decay and shadow.',
-    traits: {},
-    hubX: 90,
-    hubY: 10,
-    hubName: 'Cryptspire',
-    outposts: [
-      { name: 'Graveshade Post', type: OutpostType.FORWARD, x: 92, y: 12 },
-      { name: 'Rotfang Camp', type: OutpostType.RESOURCE, x: 88, y: 9 },
-      { name: 'Boneclutch Nest', type: OutpostType.DEFENSIVE, x: 90, y: 13 },
-      { name: 'Soulrift Hollow', type: OutpostType.MAGICAL, x: 87, y: 11 },
-      { name: 'Blackfog Vale', type: OutpostType.NEUTRAL, x: 93, y: 10 },
+    [Race.UNDEAD]: [
+      ['Graveshade Post', OutpostType.FORWARD],
+      ['Rotfang Camp', OutpostType.RESOURCE],
+      ['Boneclutch Nest', OutpostType.DEFENSIVE],
+      ['Soulrift Hollow', OutpostType.MAGICAL],
+      ['Blackfog Vale', OutpostType.NEUTRAL],
     ],
-  },
-];
+  };
+
+  const angleStep = (2 * Math.PI) / Object.keys(Race).length;
+
+  return Object.values(Race).map((race, index) => {
+    const angle = index * angleStep;
+    const hubX = Math.round(centerX + radius * Math.cos(angle));
+    const hubY = Math.round(centerY + radius * Math.sin(angle));
+    const hubKey = `${hubX},${hubY}`;
+    used.add(hubKey);
+    console.log(
+      `🏰 ${race} hub '${hubNames[race]}' placed at (${hubX}, ${hubY})`,
+    );
+
+    const outposts: RaceOutpost[] = raceOutpostNames[race].map(
+      ([name, type]) => {
+        const pos = generateUniqueCoordinates(used, hubX, hubY, 10);
+        console.log(
+          `🏕️ ${race} outpost '${name}' placed at (${pos.x}, ${pos.y})`,
+        );
+        return { name, type: type as OutpostType, x: pos.x, y: pos.y };
+      },
+    );
+
+    return {
+      name: race,
+      description: descriptions[race],
+      traits: {},
+      hubX,
+      hubY,
+      hubName: hubNames[race],
+      outposts,
+    };
+  });
+}
