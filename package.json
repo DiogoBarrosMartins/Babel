@@ -20,6 +20,8 @@
     "start:world:prod": "ts-node -r tsconfig-paths/register services/world/main.ts",
     "start:vote:dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules --project tsconfig.json services/vote/main.ts",
     "start:vote:prod": "ts-node -r tsconfig-paths/register services/vote/main.ts",
+    "start:combat:dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules --project tsconfig.json services/combat/main.ts",
+    "start:combat:prod": "ts-node -r tsconfig-paths/register services/combat/main.ts",
     "lint": "eslint \"{services,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",

@@ -309,4 +309,31 @@ export class WorldService {
   private getDistance(x1: number, y1: number, x2: number, y2: number): number {
     return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
   }
+
+  async getTilesAround(x: number, y: number, radius = 20) {
+    if (x < 0 || y < 0 || x >= WORLD_SIZE || y >= WORLD_SIZE) {
+      throw new BadRequestException('Invalid coordinates');
+    }
+
+    const minX = Math.max(0, x - radius);
+    const maxX = Math.min(WORLD_SIZE - 1, x + radius);
+    const minY = Math.max(0, y - radius);
+    const maxY = Math.min(WORLD_SIZE - 1, y + radius);
+
+    const tiles = await this.prisma.tile.findMany({
+      where: {
+        x: { gte: minX, lte: maxX },
+        y: { gte: minY, lte: maxY },
+      },
+      select: {
+        x: true,
+        y: true,
+        type: true,
+        race: true,
+        playerName: true,
+      },
+    });
+
+    return tiles;
+  }
 }

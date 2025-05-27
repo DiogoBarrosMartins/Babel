@@ -1,34 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { WorldService } from './world.service';
-import { CreateWorldDto } from './dto/create-world.dto';
-import { UpdateWorldDto } from './dto/update-world.dto';
 
 @Controller('world')
 export class WorldController {
   constructor(private readonly worldService: WorldService) {}
 
-  @Post()
-  create(@Body() createWorldDto: CreateWorldDto) {
-    return this.worldService.create(createWorldDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.worldService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.worldService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateWorldDto: UpdateWorldDto) {
-    return this.worldService.update(+id, updateWorldDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.worldService.remove(+id);
+  @Get(':x/:y')
+  async getNearbyTiles(
+    @Param('x', ParseIntPipe) x: number,
+    @Param('y', ParseIntPipe) y: number,
+    @Query('radius') radius = '5',
+  ) {
+    const parsedRadius = Math.max(1, Math.min(10, parseInt(radius, 10) || 5));
+    return this.worldService.getTilesAround(x, y, parsedRadius);
   }
 }
