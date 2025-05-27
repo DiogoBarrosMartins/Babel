@@ -16,7 +16,6 @@ enum TileType {
   SHRINE
 }
 
-
 model Tile {
   id         String   @id @default(uuid())
   x          Int
@@ -27,13 +26,13 @@ model Tile {
   playerId   String
   playerName String
   metadata   Json?
+
+  @@unique([x, y])
 }
 
 model World {
   id          String   @id @default(uuid())
   name        String   @unique
-  isGenerated Boolean  @default(false)
   createdAt   DateTime @default(now())
   size        Int
 }
-
