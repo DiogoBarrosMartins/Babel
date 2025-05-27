@@ -67,6 +67,54 @@ services:
     ports:
       - 3003:3003
 
+  troop:
+    build:
+      context: ../
+      dockerfile: docker/troop/Dockerfile.local
+    container_name: troop
+    working_dir: /app
+    command: >
+     sh -c "yarn prisma generate --schema=services/troop/prisma/schema.prisma &&
+             yarn prisma migrate reset --force --schema=services/troop/prisma/schema.prisma &&
+             yarn prisma migrate dev --name init --schema=services/troop/prisma/schema.prisma &&
+             yarn start:troop:dev"
+    env_file:
+      - ../services/troop/.env
+    ports:
+      - 3006:3006
+
+  vote:
+    build:
+      context: ../
+      dockerfile: docker/vote/Dockerfile.local
+    container_name: vote
+    working_dir: /app
+    command: >
+     sh -c "yarn prisma generate --schema=services/vote/prisma/schema.prisma &&
+             yarn prisma migrate reset --force --schema=services/vote/prisma/schema.prisma &&
+             yarn prisma migrate dev --name init --schema=services/vote/prisma/schema.prisma &&
+             yarn start:vote:dev"
+    env_file:
+      - ../services/vote/.env
+    ports:
+      - 3007:3007
+
+  combat:
+    build:
+      context: ../
+      dockerfile: docker/combat/Dockerfile.local
+    container_name: combat
+    working_dir: /app
+    command: >
+     sh -c "yarn prisma generate --schema=services/combat/prisma/schema.prisma &&
+             yarn prisma migrate reset --force --schema=services/combat/prisma/schema.prisma &&
+             yarn prisma migrate dev --name init --schema=services/combat/prisma/schema.prisma &&
+             yarn start:combat:dev"
+    env_file:
+      - ../services/combat/.env
+    ports:
+      - 3008:3008
+
   world:
     build:
       context: ../

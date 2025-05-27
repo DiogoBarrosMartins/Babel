@@ -86,6 +86,7 @@ export class WorldService {
     await this.prisma.tile.createMany({ data: tiles });
     this.logger.log(`✅ Created ${tiles.length} base tiles.`);
   }
+
   private async placeFactionStructures(): Promise<{ x: number; y: number }[]> {
     const hubs: { x: number; y: number }[] = [];
 
@@ -189,12 +190,28 @@ export class WorldService {
       throw new BadRequestException('Missing required fields in payload');
     }
 
-    const { x, y } = await this.getAvailableCoordinates();
+    // Step 1: Get all outposts of this race
+    const outposts = await this.prisma.tile.findMany({
+      where: {
+        type: TileType.OUTPOST,
+        race,
+      },
+    });
 
-    await this.prisma.tile.create({
+    if (outposts.length === 0) {
+      throw new Error(`No outposts found for race "${race}"`);
+    }
+
+    // Step 2: Pick one outpost at random
+    const origin = outposts[Math.floor(Math.random() * outposts.length)];
+
+    // Step 3: Search for the closest available EMPTY tile around the outpost
+    const { x, y } = await this.findEmptyTileNear(origin.x, origin.y);
+
+    // Step 4: Update tile to be a village
+    await this.prisma.tile.update({
+      where: { x_y: { x, y } },
       data: {
-        x,
-        y,
         name,
         type: TileType.VILLAGE,
         race,
@@ -213,8 +230,35 @@ export class WorldService {
     });
 
     this.logger.log(
-      `✅ Village ${name} added at (${x}, ${y}) for ${playerName}`,
+      `✅ Village ${name} created at (${x}, ${y}) for ${playerName}`,
     );
+  }
+  private async findEmptyTileNear(
+    originX: number,
+    originY: number,
+  ): Promise<{ x: number; y: number }> {
+    const MAX_RADIUS = 10;
+
+    for (let radius = 1; radius <= MAX_RADIUS; radius++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        for (let dy = -radius; dy <= radius; dy++) {
+          const x = originX + dx;
+          const y = originY + dy;
+
+          if (x < 0 || y < 0 || x >= WORLD_SIZE || y >= WORLD_SIZE) continue;
+
+          const tile = await this.prisma.tile.findUnique({
+            where: { x_y: { x, y } },
+          });
+
+          if (tile && tile.type === TileType.EMPTY) {
+            return { x, y };
+          }
+        }
+      }
+    }
+
+    throw new Error('❌ Could not find nearby empty tile');
   }
 
   private findNearestHub(
