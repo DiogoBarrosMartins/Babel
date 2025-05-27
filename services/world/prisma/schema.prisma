@@ -28,3 +28,12 @@ model Tile {
   playerName String
   metadata   Json?
 }
+
+model World {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  isGenerated Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  size        Int
+}
+
