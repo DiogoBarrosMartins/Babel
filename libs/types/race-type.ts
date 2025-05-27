@@ -46,7 +46,6 @@ function generateUniqueCoordinates(
     const key = `${x},${y}`;
     if (!used.has(key)) {
       used.add(key);
-      console.log(`📍 Coordinates reserved at (${x}, ${y})`);
       return { x, y };
     }
     attempts++;
