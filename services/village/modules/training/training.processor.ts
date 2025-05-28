@@ -1,58 +1,50 @@
 import { Processor, Process } from '@nestjs/bull';
 import { Job } from 'bull';
 import { PrismaService } from '../../prisma/prisma.service';
-import { FinishTrainingPayload } from './training-queue.service';
 
 @Processor('training')
 export class TrainingProcessor {
   constructor(private readonly prisma: PrismaService) {}
 
   @Process('finishTraining')
-  async handleFinishTraining(job: Job<FinishTrainingPayload>) {
-    const { troopId, count } = job.data;
-    const jobId = job.id.toString();
+  async handleFinishTraining(
+    job: Job<{ taskId: string; buildTimeMs: number }>,
+  ) {
+    const { taskId, buildTimeMs } = job.data;
 
+    // 1. Load the batch task
+    const task = await this.prisma.trainingTask.findUniqueOrThrow({
+      where: { id: taskId },
+    });
+
+    // 2. Grant one unit to the troop
     await this.prisma.troop.update({
-      where: { id: troopId },
-      data: {
-        quantity: { increment: count },
-      },
+      where: { id: task.troopId },
+      data: { quantity: { increment: 1 } },
     });
 
-    await this.prisma.trainingTask.updateMany({
-      where: { queueJobId: jobId },
-      data: { status: 'completed' },
+    // 3. Decrement remaining count
+    const remaining = task.remaining - 1;
+    const updateData: any = { remaining };
+    if (remaining <= 0) {
+      updateData.status = 'completed';
+    }
+    await this.prisma.trainingTask.update({
+      where: { id: taskId },
+      data: updateData,
     });
 
-    const nextTask = await this.prisma.trainingTask.findFirst({
-      where: {
-        troopId,
-        status: 'in_progress',
-      },
-      orderBy: {
-        endTime: 'asc',
-      },
-      select: {
-        endTime: true,
-      },
-    });
-
-    if (nextTask) {
-      await this.prisma.troop.update({
-        where: { id: troopId },
-        data: {
-          status: 'queued',
-          queuedUntil: nextTask.endTime,
+    // 4. Re-enqueue if more remain
+    if (remaining > 0) {
+      await job.queue.add(
+        'finishTraining',
+        { taskId, buildTimeMs },
+        {
+          delay: buildTimeMs,
+          attempts: 3,
+          backoff: { type: 'fixed', delay: 1000 },
         },
-      });
-    } else {
-      await this.prisma.troop.update({
-        where: { id: troopId },
-        data: {
-          status: 'idle',
-          queuedUntil: null,
-        },
-      });
+      );
     }
   }
 }

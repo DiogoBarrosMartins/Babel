@@ -102,6 +102,7 @@ model TrainingTask {
   troopId      String
   troopType    String
   count        Int
+  remaining    Int      // units still in production
   status       String   @default("in_progress")
   startTime    DateTime @default(now())
   endTime      DateTime

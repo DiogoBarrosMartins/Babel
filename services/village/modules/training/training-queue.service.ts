@@ -3,10 +3,8 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue, Job } from 'bull';
 
 export interface FinishTrainingPayload {
-  villageId: string;
-  troopId: string;
-  troopType: string;
-  count: number;
+  taskId: string;
+  buildTimeMs: number;
 }
 
 @Injectable()

@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  TrainingQueueService,
-  FinishTrainingPayload,
-} from './training-queue.service';
+import { TrainingQueueService } from './training-queue.service';
 
 @Injectable()
 export class TrainingService {
@@ -18,46 +15,33 @@ export class TrainingService {
     troopType: string,
     count: number,
     unitTimeMs: number,
-  ): Promise<Array<{ taskId: string; finishAt: Date }>> {
-    const tasks: Array<{ taskId: string; finishAt: Date }> = [];
-    let lastFinishAt: Date | null = null;
+  ): Promise<{ taskId: string; finishAt: Date }> {
+    const finishAt = new Date(Date.now() + unitTimeMs * count);
 
-    for (let i = 0; i < count; i++) {
-      const delay = unitTimeMs * (i + 1);
-      const finishAt = new Date(Date.now() + delay);
-
-      const payload: FinishTrainingPayload = {
+    const task = await this.prisma.trainingTask.create({
+      data: {
         villageId,
         troopId,
         troopType,
-        count: 1,
-      };
-      const job = await this.trainingQueue.queueTraining(payload, delay);
+        count,
+        remaining: count,
+        status: 'in_progress',
+        startTime: new Date(),
+        endTime: finishAt,
+        queueJobId: '',
+      },
+    });
 
-      const task = await this.prisma.trainingTask.create({
-        data: {
-          villageId,
-          troopId,
-          troopType,
-          count: 1,
-          status: 'in_progress',
-          startTime: new Date(),
-          endTime: finishAt,
-          queueJobId: job.id.toString(),
-        },
-      });
+    const job = await this.trainingQueue.queueTraining(
+      { taskId: task.id, buildTimeMs: unitTimeMs },
+      unitTimeMs,
+    );
 
-      tasks.push({ taskId: task.id, finishAt });
-      lastFinishAt = finishAt;
-    }
+    await this.prisma.trainingTask.update({
+      where: { id: task.id },
+      data: { queueJobId: job.id.toString() },
+    });
 
-    if (lastFinishAt) {
-      await this.prisma.troop.update({
-        where: { id: troopId },
-        data: { status: 'queued', queuedUntil: lastFinishAt },
-      });
-    }
-
-    return tasks;
+    return { taskId: task.id, finishAt };
   }
 }
