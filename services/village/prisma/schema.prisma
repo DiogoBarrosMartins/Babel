@@ -6,7 +6,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgresql://root:password@db:5432/village"
 }
 
 enum BuildingType {
@@ -44,6 +44,9 @@ model Village {
 
   buildings Building[] 
   constructionTasks ConstructionTask[]
+
+  troops               Troop[]          @relation("VillageTroops")
+  trainingTasks        TrainingTask[]   @relation("VillageTrainingTasks")
 }
 
 model Building {
@@ -75,4 +78,38 @@ model ConstructionTask {
   updatedAt     DateTime    @updatedAt
 
   @@index([villageId])
+}
+
+
+model Troop {
+  id           String          @id @default(uuid())
+  villageId    String
+  troopType    String
+  quantity     Int             @default(0)
+  status       String          @default("idle")
+  queuedUntil  DateTime?       
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  Village      Village         @relation("VillageTroops", fields: [villageId], references: [id])
+  trainingTasks TrainingTask[]
+  @@unique([villageId, troopType], name: "villageId_troopType")
+}
+
+model TrainingTask {
+  id           String   @id @default(uuid())
+  villageId    String
+  troopId      String
+  troopType    String
+  count        Int
+  status       String   @default("in_progress")
+  startTime    DateTime @default(now())
+  endTime      DateTime
+  queueJobId   String
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  Troop        Troop    @relation(fields: [troopId], references: [id])
+  Village      Village  @relation("VillageTrainingTasks", fields: [villageId], references: [id])
 }

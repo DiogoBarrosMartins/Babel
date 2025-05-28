@@ -12,8 +12,6 @@
     "start:player:prod": "ts-node -r tsconfig-paths/register services/player/main.ts",
     "start:village:dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules --project tsconfig.json services/village/main.ts",
     "start:village:prod": "ts-node -r tsconfig-paths/register services/village/main.ts",
-    "start:troop:dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules --project tsconfig.json services/troop/main.ts",
-    "start:troop:prod": "ts-node -r tsconfig-paths/register services/troop/main.ts",
     "start:race:dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules --project tsconfig.json services/race/main.ts",
     "start:race:prod": "ts-node -r tsconfig-paths/register services/race/main.ts",
     "start:world:dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules --project tsconfig.json services/world/main.ts",
