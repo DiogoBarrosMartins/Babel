@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TileController } from './tile.controller';
-import { TileService } from './tile.service';
+import { TileController } from '../tile.controller';
+import { TileService } from '../tile.service';
 
 describe('TileController', () => {
   let controller: TileController;
