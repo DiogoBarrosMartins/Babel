@@ -150,5 +150,25 @@ services:
       yarn prisma migrate deploy --schema=services/village/prisma/schema.prisma &&
        yarn start:village:dev"
 
+  chat:
+    build:
+      context: ../
+      dockerfile: docker/chat/Dockerfile.local
+    container_name: chat
+    depends_on:
+      - db
+      - redpanda
+      - redis
+    env_file:
+      - ../services/chat/.env
+    ports:
+      - 3004:3004
+    working_dir: /app
+    command: >
+      sh -c
+      "yarn prisma generate --schema=services/chat/prisma/schema.prisma &&
+      yarn prisma migrate deploy --schema=services/chat/prisma/schema.prisma &&
+       yarn start:chat:dev"
+
 volumes:
   pgdata:
