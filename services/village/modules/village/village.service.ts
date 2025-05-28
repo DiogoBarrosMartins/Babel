@@ -65,16 +65,16 @@ export class VillageService {
         name: data.name,
 
         resourceAmounts: {
+          food: 500,
           wood: 500,
-          clay: 500,
-          iron: 500,
-          grain: 500,
+          stone: 500,
+          gold: 500,
         },
         resourceProductionRates: {
+          food: 10,
           wood: 10,
-          clay: 10,
-          iron: 10,
-          grain: 8,
+          stone: 10,
+          gold: 8,
         },
         lastCollectedAt: new Date(),
       },

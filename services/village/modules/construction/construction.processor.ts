@@ -64,10 +64,10 @@ export class ConstructionProcessor {
     level: number,
   ): { resource: string; amount: number } | null {
     const resourceMap: Partial<Record<BuildingType, string>> = {
-      [BuildingType.SAWMILL]: 'wood',
-      [BuildingType.CLAY_PIT]: 'clay',
-      [BuildingType.IRON_MINE]: 'iron',
-      [BuildingType.FARM]: 'grain',
+      [BuildingType.SAWMILL]: 'food',
+      [BuildingType.CLAY_PIT]: 'wood',
+      [BuildingType.IRON_MINE]: 'stone',
+      [BuildingType.FARM]: 'gold',
     };
 
     const resource = resourceMap[type];

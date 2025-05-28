@@ -1,4 +1,3 @@
-// services/village/src/modules/troops/troops.service.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResourceService } from '../resource/resource.service';
@@ -17,7 +16,6 @@ export class TroopService {
     const def = TROOP_TYPES[troopType];
     if (!def) throw new Error(`Troop type "${troopType}" inválido`);
 
-    // 1) garante que existe o registro de Troop
     const troop = await this.prisma.troop.upsert({
       where: { villageId_troopType: { villageId, troopType } },
       create: {
@@ -30,7 +28,6 @@ export class TroopService {
       update: {},
     });
 
-    // 2) deduz recursos de uma só vez
     const totalCost = {
       food: def.cost.food * count,
       wood: def.cost.wood * count,
@@ -39,7 +36,6 @@ export class TroopService {
     };
     await this.resourceService.deductResources(villageId, totalCost);
 
-    // 3) agenda N jobs unitários
     const unitTimeMs = def.buildTime * 1000;
     return this.trainingService.startTraining(
       villageId,

@@ -6,7 +6,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://root:password@db:5432/village"
+  url      = env("DATABASE_URL")
 }
 
 enum BuildingType {
@@ -38,8 +38,8 @@ model Village {
   updatedAt DateTime @updatedAt
   playerName String
   
-  resourceAmounts          Json     @default("{\"wood\":500,\"clay\":500,\"iron\":500,\"grain\":500}")
-  resourceProductionRates  Json     @default("{\"wood\":10,\"clay\":10,\"iron\":10,\"grain\":8}")
+  resourceAmounts          Json     @default("{\"food\":500,\"wood\":500,\"stone\":500,\"gold\":500}")
+  resourceProductionRates  Json     @default("{\"food\":10,\"wood\":10,\"stone\":10,\"gold\":8}")
   lastCollectedAt         DateTime @default(now())
 
   buildings Building[] 

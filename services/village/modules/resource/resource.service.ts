@@ -1,13 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { KafkaService } from '../../../../libs/kafka/kafka.service';
-
-interface Resources extends Record<string, number> {
-  wood: number;
-  clay: number;
-  iron: number;
-  grain: number;
-}
+import { Resources } from '../../../../libs/types/resource-map';
 
 @Injectable()
 export class ResourceService {
@@ -27,18 +21,8 @@ export class ResourceService {
       },
     });
 
-    const amounts = (village.resourceAmounts as Resources) ?? {
-      wood: 0,
-      clay: 0,
-      iron: 0,
-      grain: 0,
-    };
-    const rates = (village.resourceProductionRates as Resources) ?? {
-      wood: 0,
-      clay: 0,
-      iron: 0,
-      grain: 0,
-    };
+    const amounts = village.resourceAmounts as Resources;
+    const rates = village.resourceProductionRates as Resources;
 
     const now = new Date();
     const last = village.lastCollectedAt;
@@ -47,10 +31,10 @@ export class ResourceService {
     console.log(elapsedSec);
 
     const newResources: Resources = {
+      food: amounts.food + elapsedSec * rates.food,
       wood: amounts.wood + elapsedSec * rates.wood,
-      clay: amounts.clay + elapsedSec * rates.clay,
-      iron: amounts.iron + elapsedSec * rates.iron,
-      grain: amounts.grain + elapsedSec * rates.grain,
+      stone: amounts.stone + elapsedSec * rates.stone,
+      gold: amounts.gold + elapsedSec * rates.gold,
     };
 
     await this.prisma.village.update({
@@ -70,30 +54,37 @@ export class ResourceService {
     return newResources;
   }
 
-  async deductResources(villageId: string, cost: any): Promise<void> {
+  async deductResources(villageId: string, cost: Resources): Promise<void> {
     const village = await this.prisma.village.findUniqueOrThrow({
       where: { id: villageId },
       select: { resourceAmounts: true },
     });
+    const current = village.resourceAmounts as Resources;
 
-    const currentResources = village.resourceAmounts as unknown as Resources;
+    for (const key of ['food', 'wood', 'stone', 'gold'] as const) {
+      if (current[key] < cost[key]) {
+        throw new BadRequestException(
+          `Insufficient resources: need ${cost[key]} ${key}, but have only ${current[key]}.`,
+        );
+      }
+    }
 
-    const newResources: Resources = {
-      wood: Math.max(currentResources.wood - (cost.wood || 0), 0),
-      clay: Math.max(currentResources.clay - (cost.clay || 0), 0),
-      iron: Math.max(currentResources.iron - (cost.iron || 0), 0),
-      grain: Math.max(currentResources.grain - (cost.grain || 0), 0),
+    const updated: Resources = {
+      food: Math.max(current.food - cost.food, 0),
+      wood: Math.max(current.wood - cost.wood, 0),
+      stone: Math.max(current.stone - cost.stone, 0),
+      gold: Math.max(current.gold - cost.gold, 0),
     };
 
     await this.prisma.village.update({
       where: { id: villageId },
-      data: { resourceAmounts: newResources },
+      data: { resourceAmounts: updated },
     });
 
     await this.kafka.emit('village.resources.deducted', {
       villageId,
       cost,
-      newResourceAmounts: newResources,
+      newResourceAmounts: updated,
     });
   }
 }

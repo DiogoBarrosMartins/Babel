@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BuildingType } from '@prisma/client';
 import { ConstructionService } from '../construction/construction.service';
@@ -8,6 +8,7 @@ import {
   BUILD_TIMES_MS,
 } from '../../../../libs/types/building-type';
 import { BUILDING_NAMES } from '../../../../libs/types/building-name';
+import { Resources } from '../../../../libs/types/resource-map';
 
 @Injectable()
 export class BuildingService {
@@ -30,21 +31,29 @@ export class BuildingService {
 
     await this.prisma.building.createMany({ data: buildings });
   }
+
   async upgradeBuilding(villageId: string, type: BuildingType) {
     const existing = await this.prisma.building.findFirst({
       where: { villageId, type },
     });
-
     if (!existing) {
-      throw new Error(`Building ${type} not found in village ${villageId}`);
+      throw new BadRequestException(
+        `Building ${type} not found in village ${villageId}`,
+      );
     }
 
     const currentLevel = existing.level;
-    const cost = BUILDING_COSTS[type][currentLevel];
+    const costDef = BUILDING_COSTS[type][currentLevel];
     const buildTimeMs = BUILD_TIMES_MS[type][currentLevel];
     const finishAt = new Date(Date.now() + buildTimeMs);
 
-    await this.resourceService.deductResources(villageId, cost);
+    const resourceCost: Resources = {
+      food: costDef.food,
+      wood: costDef.wood,
+      stone: costDef.stone,
+      gold: costDef.gold,
+    };
+    await this.resourceService.deductResources(villageId, resourceCost);
 
     await this.constructionService.queueBuild(
       villageId,

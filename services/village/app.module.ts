@@ -7,6 +7,7 @@ import { KafkaController } from './kafka/kafka.controller';
 import { VillageModule } from './modules/village/village.module';
 import { KafkaModule } from '../../libs/kafka/kafka.module';
 import { BullModule } from '@nestjs/bull';
+import { TrainingModule } from './modules/training/training.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { BullModule } from '@nestjs/bull';
     }),
     KafkaModule,
     VillageModule,
+    TrainingModule,
   ],
   providers: [AppService],
   controllers: [AppController, KafkaController],

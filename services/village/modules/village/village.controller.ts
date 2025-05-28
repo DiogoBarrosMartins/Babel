@@ -13,7 +13,7 @@ import { Village } from '@prisma/client';
 export class VillageController {
   constructor(private readonly villageService: VillageService) {}
 
-  @Get('player/:playerId')
+  @Get('/:playerId')
   @ApiOperation({ summary: 'Get all villages for a given player' })
   @ApiParam({
     name: 'playerId',
