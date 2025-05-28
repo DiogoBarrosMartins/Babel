@@ -1,4 +1,3 @@
-// services/village/src/modules/training/training.processor.ts
 import { Processor, Process } from '@nestjs/bull';
 import { Job } from 'bull';
 import { PrismaService } from '../../prisma/prisma.service';
