@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { TroopService } from './troop.service';
 import { CreateTroopDto } from './dto/create-troop.dto';
 import { UpdateTroopDto } from './dto/update-troop.dto';

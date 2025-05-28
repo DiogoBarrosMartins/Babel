@@ -1,224 +1,454 @@
-export enum HumanTroop {
-  MILITIA = 'HUMAN_MILITIA',
-  LONGBOWMAN = 'HUMAN_LONGBOWMAN',
-  PALADIN = 'HUMAN_PALADIN',
-}
+import { Race } from './race-type';
 
-export enum OrcTroop {
-  GRUNT = 'ORC_GRUNT',
-  AXERIDER = 'ORC_AXERIDER',
-  WARLORD = 'ORC_WARLORD',
-}
-
-export enum ElfTroop {
-  SCOUT = 'ELF_SCOUT',
-  DRUID = 'ELF_DRUID',
-  BLADEMASTER = 'ELF_BLADEMASTER',
-}
-
-export enum UndeadTroop {
-  SKELETON = 'UNDEAD_SKELETON',
-  BANSHEE = 'UNDEAD_BANSHEE',
-  DEATH_KNIGHT = 'UNDEAD_DEATH_KNIGHT',
-}
-
-export enum DwarfTroop {
-  AXEWIELDER = 'DWARF_AXEWIELDER',
-  GUNNER = 'DWARF_GUNNER',
-  IRON_GUARDIAN = 'DWARF_IRON_GUARDIAN',
-}
-
-export type TroopKey =
-  | HumanTroop
-  | OrcTroop
-  | ElfTroop
-  | UndeadTroop
-  | DwarfTroop;
+export type TroopTier = 'Basic' | 'Advanced' | 'Elite';
+export type TroopType =
+  | 'Infantry'
+  | 'Ranged'
+  | 'Cavalry'
+  | 'Mage'
+  | 'Siege'
+  | 'Support';
 
 export interface TroopDefinition {
+  id: string;
   name: string;
-  description: string;
-  attack: number;
-  defense: number;
-  speed: number;
-  carryCapacity: number;
-  trainingTime: number;
+  race: Race;
+  tier: TroopTier;
+  type: TroopType;
   cost: {
     food: number;
     wood: number;
     stone: number;
     gold: number;
   };
+  buildTime: number; // in seconds
+  attack: number;
+  defense: number;
+  speed: number; // tiles/hour
+  capacity: number;
+  abilities?: string[];
+  description: string;
+  metadata: Record<string, number | string | boolean>;
 }
 
-export const TROOP_DEFINITIONS: Record<TroopKey, TroopDefinition> = {
-  [HumanTroop.MILITIA]: {
-    name: 'Militia',
-    description:
-      'Peasant-soldiers, hastily trained to defend their homeland with pitchforks and grit.',
+export const TROOP_TYPES: Record<string, TroopDefinition> = {
+  // HUMAN TROOPS
+  human_swordsman: {
+    id: 'human_swordsman',
+    name: 'Swordsman',
+    race: Race.HUMAN,
+    tier: 'Basic',
+    type: 'Infantry',
+    cost: { food: 50, wood: 20, stone: 10, gold: 0 },
+    buildTime: 30,
     attack: 30,
-    defense: 25,
-    speed: 5,
-    carryCapacity: 20,
-    trainingTime: 50,
-    cost: { food: 40, wood: 20, stone: 10, gold: 5 },
-  },
-  [HumanTroop.LONGBOWMAN]: {
-    name: 'Longbowman',
-    description:
-      'Elite archers trained in the art of war from childhood, feared for their deadly range.',
-    attack: 50,
     defense: 20,
-    speed: 6,
-    carryCapacity: 15,
-    trainingTime: 70,
-    cost: { food: 60, wood: 70, stone: 10, gold: 30 },
-  },
-  [HumanTroop.PALADIN]: {
-    name: 'Paladin',
+    speed: 10,
+    capacity: 10,
     description:
-      'Holy knights clad in gleaming armor, wielding divine might and unwavering resolve.',
-    attack: 80,
-    defense: 60,
-    speed: 8,
-    carryCapacity: 40,
-    trainingTime: 120,
-    cost: { food: 90, wood: 60, stone: 50, gold: 60 },
+      'A balanced front-line infantry unit trained to hold the line.',
+    metadata: {},
   },
-
-  [UndeadTroop.SKELETON]: {
-    name: 'Skeleton',
-    description:
-      'Animated bones that swarm the living. Weak alone, terrifying in numbers.',
-    attack: 20,
+  human_archer: {
+    id: 'human_archer',
+    name: 'Archer',
+    race: Race.HUMAN,
+    tier: 'Basic',
+    type: 'Ranged',
+    cost: { food: 40, wood: 40, stone: 0, gold: 0 },
+    buildTime: 35,
+    attack: 25,
     defense: 10,
-    speed: 5,
-    carryCapacity: 10,
-    trainingTime: 30,
-    cost: { food: 10, wood: 5, stone: 5, gold: 0 },
-  },
-  [UndeadTroop.BANSHEE]: {
-    name: 'Banshee',
+    speed: 12,
+    capacity: 8,
     description:
-      'Spectral horrors whose wails shatter morale and drive enemies to madness.',
-    attack: 40,
-    defense: 30,
-    speed: 7,
-    carryCapacity: 5,
-    trainingTime: 80,
-    cost: { food: 30, wood: 10, stone: 20, gold: 40 },
+      'Long-ranged attacker that deals damage before the enemy reaches melee.',
+    metadata: {},
   },
-  [UndeadTroop.DEATH_KNIGHT]: {
-    name: 'Death Knight',
-    description:
-      'Cursed champions risen from ancient battlefields, striking fear with each charge.',
-    attack: 90,
-    defense: 70,
-    speed: 6,
-    carryCapacity: 30,
-    trainingTime: 140,
-    cost: { food: 100, wood: 50, stone: 50, gold: 80 },
+  human_knight: {
+    id: 'human_knight',
+    name: 'Knight',
+    race: Race.HUMAN,
+    tier: 'Advanced',
+    type: 'Cavalry',
+    cost: { food: 90, wood: 40, stone: 20, gold: 60 },
+    buildTime: 70,
+    attack: 50,
+    defense: 40,
+    speed: 16,
+    capacity: 15,
+    description: 'Heavily-armored cavalry with devastating charges.',
+    metadata: {},
   },
-
-  [OrcTroop.GRUNT]: {
-    name: 'Grunt',
-    description:
-      'Muscle-bound footsoldiers who revel in the chaos of close combat.',
-    attack: 40,
-    defense: 25,
-    speed: 4,
-    carryCapacity: 25,
-    trainingTime: 60,
-    cost: { food: 50, wood: 30, stone: 30, gold: 10 },
-  },
-  [OrcTroop.AXERIDER]: {
-    name: 'Axerider',
-    description:
-      'Mounted raiders who strike fast and vanish into the fog of war.',
-    attack: 60,
-    defense: 30,
+  human_cleric: {
+    id: 'human_cleric',
+    name: 'Cleric',
+    race: Race.HUMAN,
+    tier: 'Advanced',
+    type: 'Support',
+    cost: { food: 30, wood: 20, stone: 10, gold: 50 },
+    buildTime: 45,
+    attack: 10,
+    defense: 20,
     speed: 9,
-    carryCapacity: 40,
-    trainingTime: 90,
-    cost: { food: 70, wood: 60, stone: 30, gold: 40 },
+    capacity: 5,
+    abilities: ['Heal', 'Blessing'],
+    description: 'Support unit that heals allies and boosts morale.',
+    metadata: {},
   },
-  [OrcTroop.WARLORD]: {
-    name: 'Warlord',
-    description:
-      'Towering juggernauts of iron and fury, commanding fear through brute strength.',
-    attack: 100,
-    defense: 80,
-    speed: 6,
-    carryCapacity: 50,
-    trainingTime: 150,
-    cost: { food: 120, wood: 80, stone: 60, gold: 70 },
+  human_catapult: {
+    id: 'human_catapult',
+    name: 'Catapult',
+    race: Race.HUMAN,
+    tier: 'Elite',
+    type: 'Siege',
+    cost: { food: 60, wood: 100, stone: 80, gold: 40 },
+    buildTime: 110,
+    attack: 80,
+    defense: 20,
+    speed: 4,
+    capacity: 0,
+    abilities: ['SiegeAttack'],
+    description: 'Destroys enemy fortifications from a distance.',
+    metadata: {},
+  },
+  human_paladin: {
+    id: 'human_paladin',
+    name: 'Paladin',
+    race: Race.HUMAN,
+    tier: 'Elite',
+    type: 'Cavalry',
+    cost: { food: 100, wood: 50, stone: 20, gold: 80 },
+    buildTime: 90,
+    attack: 60,
+    defense: 50,
+    speed: 18,
+    capacity: 20,
+    abilities: ['HealNearby', 'Inspire'],
+    description: 'An elite knight with healing magic and a fearless charge.',
+    metadata: {},
   },
 
-  [ElfTroop.SCOUT]: {
-    name: 'Forest Scout',
-    description:
-      'Fleet-footed trackers who strike unseen and vanish like whispers.',
+  // ORC TROOPS
+  orc_grunt: {
+    id: 'orc_grunt',
+    name: 'Grunt',
+    race: Race.ORC,
+    tier: 'Basic',
+    type: 'Infantry',
+    cost: { food: 60, wood: 10, stone: 20, gold: 0 },
+    buildTime: 30,
+    attack: 40,
+    defense: 15,
+    speed: 9,
+    capacity: 12,
+    description: 'Aggressive front-line brawler with high raw strength.',
+    metadata: {},
+  },
+  orc_raider: {
+    id: 'orc_raider',
+    name: 'Raider',
+    race: Race.ORC,
+    tier: 'Basic',
+    type: 'Cavalry',
+    cost: { food: 70, wood: 20, stone: 10, gold: 10 },
+    buildTime: 40,
+    attack: 35,
+    defense: 10,
+    speed: 15,
+    capacity: 20,
+    description: 'Fast cavalry unit ideal for raids and hit-and-run tactics.',
+    metadata: {},
+  },
+  orc_berserker: {
+    id: 'orc_berserker',
+    name: 'Berserker',
+    race: Race.ORC,
+    tier: 'Advanced',
+    type: 'Infantry',
+    cost: { food: 90, wood: 30, stone: 20, gold: 30 },
+    buildTime: 60,
+    attack: 60,
+    defense: 25,
+    speed: 11,
+    capacity: 15,
+    abilities: ['Rage'],
+    description: 'Fights harder when injured. Terrifying in melee.',
+    metadata: {},
+  },
+  orc_shaman: {
+    id: 'orc_shaman',
+    name: 'Shaman',
+    race: Race.ORC,
+    tier: 'Advanced',
+    type: 'Mage',
+    cost: { food: 40, wood: 40, stone: 10, gold: 50 },
+    buildTime: 50,
     attack: 25,
     defense: 15,
     speed: 10,
-    carryCapacity: 10,
-    trainingTime: 40,
-    cost: { food: 30, wood: 30, stone: 10, gold: 10 },
+    capacity: 5,
+    abilities: ['Bloodlust', 'TotemAura'],
+    description: 'A spiritual caster that enhances nearby allies.',
+    metadata: {},
   },
-  [ElfTroop.DRUID]: {
-    name: 'Druid',
-    description:
-      'Mystics who bend the forest’s will to their own, wielding roots and storms in battle.',
-    attack: 45,
+  orc_warboar_rider: {
+    id: 'orc_warboar_rider',
+    name: 'Warboar Rider',
+    race: Race.ORC,
+    tier: 'Elite',
+    type: 'Cavalry',
+    cost: { food: 100, wood: 20, stone: 30, gold: 40 },
+    buildTime: 85,
+    attack: 70,
     defense: 40,
-    speed: 7,
-    carryCapacity: 20,
-    trainingTime: 90,
-    cost: { food: 70, wood: 40, stone: 30, gold: 30 },
-  },
-  [ElfTroop.BLADEMASTER]: {
-    name: 'Blademaster',
-    description:
-      'Deadly sword-dancers who blur through the battlefield in a flurry of steel.',
-    attack: 85,
-    defense: 50,
-    speed: 9,
-    carryCapacity: 30,
-    trainingTime: 130,
-    cost: { food: 100, wood: 60, stone: 50, gold: 50 },
+    speed: 20,
+    capacity: 18,
+    description: 'Fast, reckless cavalry unit — ideal for hit-and-run attacks.',
+    metadata: {},
   },
 
-  [DwarfTroop.AXEWIELDER]: {
-    name: 'Axewielder',
-    description:
-      'Sturdy infantry who cleave through armor with forged steel and fearless grit.',
+  // ELF TROOPS
+  elf_scout: {
+    id: 'elf_scout',
+    name: 'Scout',
+    race: Race.ELF,
+    tier: 'Basic',
+    type: 'Ranged',
+    cost: { food: 30, wood: 50, stone: 0, gold: 0 },
+    buildTime: 25,
+    attack: 20,
+    defense: 10,
+    speed: 16,
+    capacity: 6,
+    abilities: ['RevealMap'],
+    description: 'Light-footed archer who excels at gathering intel.',
+    metadata: {},
+  },
+  elf_blademaster: {
+    id: 'elf_blademaster',
+    name: 'Blademaster',
+    race: Race.ELF,
+    tier: 'Advanced',
+    type: 'Infantry',
+    cost: { food: 70, wood: 40, stone: 10, gold: 50 },
+    buildTime: 55,
     attack: 50,
-    defense: 45,
-    speed: 4,
-    carryCapacity: 20,
-    trainingTime: 70,
-    cost: { food: 60, wood: 40, stone: 40, gold: 20 },
-  },
-  [DwarfTroop.GUNNER]: {
-    name: 'Gunner',
-    description:
-      'Marksmen armed with black powder—loud, lethal, and ruthlessly precise.',
-    attack: 65,
     defense: 30,
-    speed: 5,
-    carryCapacity: 15,
-    trainingTime: 100,
-    cost: { food: 80, wood: 60, stone: 40, gold: 50 },
+    speed: 14,
+    capacity: 10,
+    abilities: ['Dodge'],
+    description: 'Elegant and deadly swordsman with blinding speed.',
+    metadata: {},
   },
-  [DwarfTroop.IRON_GUARDIAN]: {
-    name: 'Iron Guardian',
+  elf_druid: {
+    id: 'elf_druid',
+    name: 'Druid',
+    race: Race.ELF,
+    tier: 'Elite',
+    type: 'Mage',
+    cost: { food: 50, wood: 80, stone: 20, gold: 100 },
+    buildTime: 95,
+    attack: 20,
+    defense: 20,
+    speed: 10,
+    capacity: 5,
+    abilities: ['Heal', 'Entangle'],
     description:
-      'Living fortresses of mithril and fire—unmoving, unyielding, unbreakable.',
+      'Magical support unit that controls nature to heal allies or trap enemies.',
+    metadata: {},
+  },
+
+  // DWARF TROOPS
+  dwarf_guardian: {
+    id: 'dwarf_guardian',
+    name: 'Guardian',
+    race: Race.DWARF,
+    tier: 'Basic',
+    type: 'Infantry',
+    cost: { food: 40, wood: 10, stone: 40, gold: 10 },
+    buildTime: 35,
+    attack: 20,
+    defense: 40,
+    speed: 7,
+    capacity: 6,
+    description: 'Slow but durable protector with high fortitude.',
+    metadata: {},
+  },
+  dwarf_crossbowman: {
+    id: 'dwarf_crossbowman',
+    name: 'Crossbowman',
+    race: Race.DWARF,
+    tier: 'Basic',
+    type: 'Ranged',
+    cost: { food: 35, wood: 45, stone: 10, gold: 5 },
+    buildTime: 40,
+    attack: 28,
+    defense: 20,
+    speed: 8,
+    capacity: 6,
+    description: 'Heavy ranged attacker with armor-piercing bolts.',
+    metadata: {},
+  },
+  dwarf_hammerer: {
+    id: 'dwarf_hammerer',
+    name: 'Hammerer',
+    race: Race.DWARF,
+    tier: 'Advanced',
+    type: 'Infantry',
+    cost: { food: 60, wood: 30, stone: 50, gold: 30 },
+    buildTime: 60,
+    attack: 55,
+    defense: 45,
+    speed: 7,
+    capacity: 10,
+    description: 'Wields massive warhammers to crush enemy armor.',
+    metadata: {},
+  },
+  dwarf_runesmith: {
+    id: 'dwarf_runesmith',
+    name: 'Runesmith',
+    race: Race.DWARF,
+    tier: 'Advanced',
+    type: 'Mage',
+    cost: { food: 30, wood: 20, stone: 40, gold: 60 },
+    buildTime: 65,
+    attack: 20,
+    defense: 25,
+    speed: 6,
+    capacity: 5,
+    abilities: ['RuneShield', 'Stun'],
+    description: 'Magical smith who casts protective runes and disables foes.',
+    metadata: {},
+  },
+  dwarf_engineer: {
+    id: 'dwarf_engineer',
+    name: 'Engineer',
+    race: Race.DWARF,
+    tier: 'Advanced',
+    type: 'Siege',
+    cost: { food: 50, wood: 80, stone: 60, gold: 30 },
+    buildTime: 75,
+    attack: 45,
+    defense: 30,
+    speed: 8,
+    capacity: 14,
+    abilities: ['DeployTurret'],
+    description:
+      'Crafts explosive tools and deployable defenses during combat.',
+    metadata: {},
+  },
+  dwarf_battlemaster: {
+    id: 'dwarf_battlemaster',
+    name: 'Battlemaster',
+    race: Race.DWARF,
+    tier: 'Elite',
+    type: 'Infantry',
+    cost: { food: 100, wood: 20, stone: 50, gold: 100 },
+    buildTime: 100,
+    attack: 55,
+    defense: 60,
+    speed: 9,
+    capacity: 10,
+    abilities: ['BattleCry'],
+    description: 'Leads the charge with a roar that boosts ally strength.',
+    metadata: {},
+  },
+
+  // UNDEAD TROOPS
+  undead_zombie: {
+    id: 'undead_zombie',
+    name: 'Zombie',
+    race: Race.UNDEAD,
+    tier: 'Basic',
+    type: 'Infantry',
+    cost: { food: 20, wood: 0, stone: 0, gold: 0 },
+    buildTime: 20,
+    attack: 15,
+    defense: 10,
+    speed: 6,
+    capacity: 4,
+    abilities: ['Infect'],
+    description: 'Mindless undead soldier, cheap and numerous.',
+    metadata: {},
+  },
+  undead_skeleton_archer: {
+    id: 'undead_skeleton_archer',
+    name: 'Skeleton Archer',
+    race: Race.UNDEAD,
+    tier: 'Basic',
+    type: 'Ranged',
+    cost: { food: 25, wood: 30, stone: 0, gold: 5 },
+    buildTime: 30,
+    attack: 20,
+    defense: 8,
+    speed: 8,
+    capacity: 6,
+    description: 'Unliving bowmen that rain down arrows in eerie silence.',
+    metadata: {},
+  },
+  undead_ghoul: {
+    id: 'undead_ghoul',
+    name: 'Ghoul',
+    race: Race.UNDEAD,
+    tier: 'Advanced',
+    type: 'Infantry',
+    cost: { food: 60, wood: 0, stone: 20, gold: 20 },
+    buildTime: 50,
+    attack: 45,
+    defense: 25,
+    speed: 10,
+    capacity: 8,
+    abilities: ['PoisonClaws'],
+    description: 'Fast and feral predator with venomous claws.',
+    metadata: {},
+  },
+  undead_banshee: {
+    id: 'undead_banshee',
+    name: 'Banshee',
+    race: Race.UNDEAD,
+    tier: 'Advanced',
+    type: 'Mage',
+    cost: { food: 40, wood: 0, stone: 30, gold: 60 },
+    buildTime: 70,
+    attack: 25,
+    defense: 15,
+    speed: 11,
+    capacity: 4,
+    abilities: ['Wail', 'FearAura'],
+    description: 'Wails to instill fear and disrupt enemy morale.',
+    metadata: {},
+  },
+  undead_abomination: {
+    id: 'undead_abomination',
+    name: 'Abomination',
+    race: Race.UNDEAD,
+    tier: 'Elite',
+    type: 'Infantry',
+    cost: { food: 120, wood: 0, stone: 40, gold: 80 },
+    buildTime: 100,
     attack: 70,
-    defense: 90,
-    speed: 3,
-    carryCapacity: 25,
-    trainingTime: 160,
-    cost: { food: 110, wood: 70, stone: 100, gold: 80 },
+    defense: 50,
+    speed: 7,
+    capacity: 12,
+    description: 'A grotesque fusion of corpses, unstoppable in melee.',
+    metadata: {},
+  },
+  undead_necromancer: {
+    id: 'undead_necromancer',
+    name: 'Necromancer',
+    race: Race.UNDEAD,
+    tier: 'Elite',
+    type: 'Mage',
+    cost: { food: 30, wood: 50, stone: 20, gold: 120 },
+    buildTime: 100,
+    attack: 25,
+    defense: 25,
+    speed: 9,
+    capacity: 5,
+    abilities: ['RaiseDead', 'Curse'],
+    description:
+      'Summons the fallen and weakens the living. Core to Undead dominance.',
+    metadata: {},
   },
 };
