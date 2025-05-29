@@ -12,29 +12,26 @@ export class TrainingProcessor {
   ) {
     const { taskId, buildTimeMs } = job.data;
 
-    // 1. Load the batch task
     const task = await this.prisma.trainingTask.findUniqueOrThrow({
       where: { id: taskId },
     });
 
-    // 2. Grant one unit to the troop
     await this.prisma.troop.update({
       where: { id: task.troopId },
       data: { quantity: { increment: 1 } },
     });
 
-    // 3. Decrement remaining count
     const remaining = task.remaining - 1;
     const updateData: any = { remaining };
     if (remaining <= 0) {
       updateData.status = 'completed';
     }
+
     await this.prisma.trainingTask.update({
       where: { id: taskId },
       data: updateData,
     });
 
-    // 4. Re-enqueue if more remain
     if (remaining > 0) {
       await job.queue.add(
         'finishTraining',
@@ -45,6 +42,45 @@ export class TrainingProcessor {
           backoff: { type: 'fixed', delay: 1000 },
         },
       );
+      return;
+    }
+
+    const nextTask = await this.prisma.trainingTask.findFirst({
+      where: {
+        troopId: task.troopId,
+        status: 'pending',
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (nextTask) {
+      await this.prisma.trainingTask.update({
+        where: { id: nextTask.id },
+        data: {
+          status: 'in_progress',
+          startTime: new Date(),
+        },
+      });
+
+      const nextJob = await job.queue.add(
+        'finishTraining',
+        {
+          taskId: nextTask.id,
+          buildTimeMs,
+        },
+        {
+          delay: buildTimeMs,
+          attempts: 3,
+          backoff: { type: 'fixed', delay: 1000 },
+        },
+      );
+
+      await this.prisma.trainingTask.update({
+        where: { id: nextTask.id },
+        data: {
+          queueJobId: nextJob.id.toString(),
+        },
+      });
     }
   }
 }

@@ -14,7 +14,7 @@ export class TroopService {
 
   async trainTroops(villageId: string, troopType: string, count: number) {
     const def = TROOP_TYPES[troopType];
-    if (!def) throw new Error(`Troop type "${troopType}" inválido`);
+    if (!def) throw new Error(`Troop type "${troopType}" invalid`);
 
     const troop = await this.prisma.troop.upsert({
       where: { villageId_troopType: { villageId, troopType } },

@@ -6,7 +6,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgresql://root:password@localhost:5432/village"
 }
 
 enum BuildingType {
@@ -102,12 +102,12 @@ model TrainingTask {
   troopId      String
   troopType    String
   count        Int
-  remaining    Int      // units still in production
+  remaining    Int
   status       String   @default("in_progress")
   startTime    DateTime @default(now())
   endTime      DateTime
   queueJobId   String
-
+  buildingType String 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
