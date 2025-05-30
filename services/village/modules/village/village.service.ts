@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { Village } from '@prisma/client';
 import { ResourceService } from '../resource/resource.service';
 import { BuildingService } from '../building/building.service';
-import { TroopService } from '../troops/troops.service';
 
 @Injectable()
 export class VillageService {
@@ -15,7 +14,6 @@ export class VillageService {
     private readonly kafka: KafkaService,
     private readonly resourceService: ResourceService,
     private readonly buildingService: BuildingService,
-    private readonly troopService: TroopService,
   ) {}
 
   async create(dto: CreateVillageDto) {
@@ -121,6 +119,7 @@ export class VillageService {
         buildings: true,
         troops: true,
         trainingTasks: {
+          where: { status: { not: 'completed' } },
           orderBy: { createdAt: 'asc' },
         },
       },
