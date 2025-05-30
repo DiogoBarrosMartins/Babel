@@ -6,7 +6,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://root:password@localhost:5432/village"
+  url      = "postgresql://root:password@db:5432/village"
 }
 
 enum BuildingType {

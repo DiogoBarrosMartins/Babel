@@ -34,13 +34,16 @@ export class TroopService {
       stone: def.cost.stone * count,
       gold: def.cost.gold * count,
     };
+
     await this.resourceService.deductResources(villageId, totalCost);
 
     const unitTimeMs = def.buildTime * 1000;
+
     return this.trainingService.startTraining(
       villageId,
       troop.id,
       troopType,
+      def.buildingType,
       count,
       unitTimeMs,
     );
