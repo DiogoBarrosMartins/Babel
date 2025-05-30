@@ -18,9 +18,7 @@ export class TrainingService {
     count: number,
     unitTimeMs: number,
   ): Promise<{ taskId: string; finishAt: Date }> {
-    const finishAt = new Date(Date.now() + unitTimeMs * count);
-
-    const activeTask = await this.prisma.trainingTask.findFirst({
+    const existingTask = await this.prisma.trainingTask.findFirst({
       where: {
         villageId,
         buildingType,
@@ -28,22 +26,27 @@ export class TrainingService {
       },
     });
 
-    const task = await this.prisma.trainingTask.create({
-      data: {
-        troopType,
-        troopId,
-        villageId,
-        count,
-        remaining: count,
-        status: activeTask ? 'pending' : 'in_progress',
-        startTime: new Date(),
-        endTime: finishAt,
-        queueJobId: '',
-        buildingType,
-      },
-    });
+    const endTime = new Date(Date.now() + count * unitTimeMs);
 
-    if (!activeTask) {
+    const data: any = {
+      troopType,
+      troopId,
+      villageId,
+      count,
+      remaining: count,
+      status: existingTask ? 'pending' : 'in_progress',
+      endTime,
+      queueJobId: '',
+      buildingType,
+    };
+
+    if (!existingTask) {
+      data.startTime = new Date();
+    }
+
+    const task = await this.prisma.trainingTask.create({ data });
+
+    if (!existingTask) {
       const job = await this.trainingQueue.queueTraining(
         { taskId: task.id, buildTimeMs: unitTimeMs },
         unitTimeMs,
@@ -55,6 +58,51 @@ export class TrainingService {
       });
     }
 
-    return { taskId: task.id, finishAt };
+    return { taskId: task.id, finishAt: endTime };
+  }
+
+  async cancelTraining(taskId: string) {
+    const task = await this.prisma.trainingTask.findUniqueOrThrow({
+      where: { id: taskId },
+    });
+
+    if (task.status === 'completed')
+      throw new Error('Cannot cancel completed task');
+
+    await this.prisma.trainingTask.delete({ where: { id: taskId } });
+
+    if (task.status === 'in_progress') {
+      const next = await this.prisma.trainingTask.findFirst({
+        where: {
+          villageId: task.villageId,
+          buildingType: task.buildingType,
+          status: 'pending',
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (next) {
+        const buildTimeMs =
+          (task.endTime.getTime() - task.startTime.getTime()) / task.count;
+
+        await this.prisma.trainingTask.update({
+          where: { id: next.id },
+          data: {
+            status: 'in_progress',
+            startTime: new Date(),
+          },
+        });
+
+        const job = await this.trainingQueue.queueTraining(
+          { taskId: next.id, buildTimeMs },
+          buildTimeMs,
+        );
+
+        await this.prisma.trainingTask.update({
+          where: { id: next.id },
+          data: { queueJobId: job.id.toString() },
+        });
+      }
+    }
   }
 }

@@ -120,7 +120,9 @@ export class VillageService {
       include: {
         buildings: true,
         troops: true,
-        trainingTasks: { where: { status: 'in_progress' } },
+        trainingTasks: {
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
   }

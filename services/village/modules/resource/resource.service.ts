@@ -8,7 +8,7 @@ export class ResourceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly kafka: KafkaService,
-  ) {}
+  ) { }
 
   async getResources(villageId: string): Promise<Resources> {
     const village = await this.prisma.village.findUniqueOrThrow({
@@ -55,25 +55,22 @@ export class ResourceService {
   }
 
   async deductResources(villageId: string, cost: Resources): Promise<void> {
-    const village = await this.prisma.village.findUniqueOrThrow({
-      where: { id: villageId },
-      select: { resourceAmounts: true },
-    });
-    const current = village.resourceAmounts as Resources;
 
+    const resources = await this.getResources(villageId);
+ 
     for (const key of ['food', 'wood', 'stone', 'gold'] as const) {
-      if (current[key] < cost[key]) {
+      if (resources[key] < cost[key]) {
         throw new BadRequestException(
-          `Insufficient resources: need ${cost[key]} ${key}, but have only ${current[key]}.`,
+          `Insufficient resources: need ${cost[key]} ${key}, but have only ${resources[key]}.`,
         );
       }
     }
 
     const updated: Resources = {
-      food: Math.max(current.food - cost.food, 0),
-      wood: Math.max(current.wood - cost.wood, 0),
-      stone: Math.max(current.stone - cost.stone, 0),
-      gold: Math.max(current.gold - cost.gold, 0),
+      food: Math.max(resources.food - cost.food, 0),
+      wood: Math.max(resources.wood - cost.wood, 0),
+      stone: Math.max(resources.stone - cost.stone, 0),
+      gold: Math.max(resources.gold - cost.gold, 0),
     };
 
     await this.prisma.village.update({
