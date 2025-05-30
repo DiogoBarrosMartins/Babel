@@ -8,7 +8,7 @@ export class ResourceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly kafka: KafkaService,
-  ) { }
+  ) {}
 
   async getResources(villageId: string): Promise<Resources> {
     const village = await this.prisma.village.findUniqueOrThrow({
@@ -55,9 +55,8 @@ export class ResourceService {
   }
 
   async deductResources(villageId: string, cost: Resources): Promise<void> {
-
     const resources = await this.getResources(villageId);
- 
+
     for (const key of ['food', 'wood', 'stone', 'gold'] as const) {
       if (resources[key] < cost[key]) {
         throw new BadRequestException(

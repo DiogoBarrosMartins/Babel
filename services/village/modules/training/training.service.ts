@@ -1,7 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TrainingQueueService } from './training-queue.service';
 import { BuildingType } from '@prisma/client';
+import { TROOP_TYPES } from '../../../../libs/types/troop-types';
 
 @Injectable()
 export class TrainingService {
@@ -18,6 +23,22 @@ export class TrainingService {
     count: number,
     unitTimeMs: number,
   ): Promise<{ taskId: string; finishAt: Date }> {
+    const building = await this.prisma.building.findFirst({
+      where: { villageId, type: buildingType },
+    });
+
+    if (!building) throw new NotFoundException('Required building not found');
+
+    const troopDef = TROOP_TYPES[troopType];
+
+    if (!troopDef) throw new BadRequestException('Invalid troop type');
+
+    if (building.level < troopDef.requiredLevel) {
+      throw new BadRequestException(
+        `Building level too low. Requires ${troopDef.requiredLevel}, has ${building.level}`,
+      );
+    }
+
     const existingTask = await this.prisma.trainingTask.findFirst({
       where: {
         villageId,
