@@ -15,7 +15,6 @@
 | **Kafka (via Redpanda)** | Event-driven communication between services 
 | **Docker Compose**  | Container orchestration for local development 
 | **PostgreSQL**      | Relational database per service (isolated schemas) 
-| **WebSockets** (planned) | Real-time gameplay and match sessions 
 | **Redis** BullMQ | To handle construction queues 😎
 
 ---
@@ -26,10 +25,6 @@
 |--------------------|----------------|
 | `player`           | Player accounts, registration, profile 
 | `village`          | Cities, buildings, production queues 
-| `resource`  | Economy, resource generation/spending 
-| `map`      | Tile ownership, zones, world state 
-| `notification`  | Real-time events: battle reports, invites, system messages 
-| `gateway`  | API gateway or GraphQL+WebSocket bridge for frontend 
 ---
 
 ## 🧪 Development
