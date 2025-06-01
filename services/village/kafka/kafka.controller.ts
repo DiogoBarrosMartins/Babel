@@ -18,4 +18,8 @@ export class KafkaController {
     console.log('Player created event received:', payload);
     return this.svc.handleTileAllocated(payload);
   }
+  @MessagePattern('village.combat.updated')
+  async handleCombatUpdated(@Payload() payload: any) {
+    return this.svc.handleCombatUpdate(payload);
+  }
 }

@@ -1,20 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
 import { AttackRequestDto } from './dto/attack-request.dto';
-//import { TROOP_TYPES } from '../../../../libs/types/troop-types';
 import {
   BattleReportPayload,
   CombatLoot,
   CombatTroopLoss,
 } from '../../../../libs/types/combat-type';
+import { KafkaService } from '../../../../libs/kafka/kafka.service';
+import { CombatQueueService } from './combat.queue.service';
 
 @Injectable()
 export class CombatService {
   constructor(
     private readonly prisma: PrismaService,
-    @InjectQueue('combat') private readonly queue: Queue,
+    private readonly kafka: KafkaService,
+    private readonly combatQueue: CombatQueueService,
   ) {}
 
   async getBattlesForVillage(villageId: string) {
@@ -50,17 +50,38 @@ export class CombatService {
       },
     });
 
-    await this.queue.add(
-      'resolveBattle',
+    await this.combatQueue.queueBattleResolution(
       { battleId: dto.battleId },
-      { delay: new Date(dto.arrivalTime).getTime() - Date.now() },
+      new Date(dto.arrivalTime).getTime() - Date.now(),
     );
+
+    const baseCombatData = {
+      id: dto.battleId,
+      originX: dto.origin.x,
+      originY: dto.origin.y,
+      targetX: dto.target.x,
+      targetY: dto.target.y,
+      startTime: dto.startTime,
+      arrivalTime: dto.arrivalTime,
+      troops: dto.troops,
+    };
+
+    await this.kafka.emit('village.combat.updated', {
+      villageId: dto.attackerVillageId,
+      combat: { type: 'outgoing', ...baseCombatData },
+    });
+
+    await this.kafka.emit('village.combat.updated', {
+      coords: { x: dto.target.x, y: dto.target.y },
+      combat: { type: 'incoming', ...baseCombatData },
+    });
   }
 
   async resolveBattle(battleId: string) {
     const battle = await this.prisma.battle.findUnique({
       where: { id: battleId },
     });
+
     if (!battle || battle.status !== 'PENDING') return;
 
     const attackerTroops = battle.troops as {
@@ -109,6 +130,6 @@ export class CombatService {
       data: { status: 'RESOLVED' },
     });
 
-    // Emitir evento: combat.battle.resolved (falta integração com Kafka publisher)
+    // TODO: Emitir evento Kafka com resultado final da batalha
   }
 }

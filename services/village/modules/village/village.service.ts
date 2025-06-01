@@ -131,4 +131,34 @@ export class VillageService {
     await this.kafka.emit('village.deleted', { id });
     return { message: `Village ${id} deleted` };
   }
+
+  async handleCombatUpdate(payload: {
+    villageId: string;
+    combat: {
+      type: 'incoming' | 'outgoing';
+      battleId: string;
+      targetX?: number;
+      targetY?: number;
+      originX?: number;
+      originY?: number;
+      arrivalTime: string;
+      [key: string]: any;
+    };
+  }) {
+    const { villageId, combat } = payload;
+
+    const village = await this.prisma.village.findUniqueOrThrow({
+      where: { id: villageId },
+    });
+
+    const state = village.combatState || { outgoing: [], incoming: [] };
+
+    state[combat.type] ??= [];
+    state[combat.type].push(combat);
+
+    await this.prisma.village.update({
+      where: { id: villageId },
+      data: { combatState: state },
+    });
+  }
 }
