@@ -6,5 +6,35 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgresql://root:password@localhost:5432/combat"
 }
+
+model Battle {
+  id               String   @id @default(uuid())
+  attackerVillageId String
+  defenderVillageId String?
+  originX          Int
+  originY          Int
+  targetX          Int
+  targetY          Int
+  troops           Json
+  startTime        DateTime
+  arrivalTime      DateTime
+  status           String
+  createdAt        DateTime @default(now())
+
+  report           BattleReport?
+}
+
+model BattleReport {
+  battleId         String   @id
+  outcome          String
+  attackerLosses   Json
+  defenderLosses   Json
+  loot             Json
+  notes            String?
+  createdAt        DateTime @default(now())
+
+  battle           Battle   @relation(fields: [battleId], references: [id])
+}
+

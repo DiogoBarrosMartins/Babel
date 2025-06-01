@@ -32,5 +32,4 @@ for x, y, race in villages:
 plt.title('🌍 Babel World Map')
 plt.xlabel('X')
 plt.ylabel('Y')
-plt.legend(loc='upper right', fontsize='small')
 plt.show()
