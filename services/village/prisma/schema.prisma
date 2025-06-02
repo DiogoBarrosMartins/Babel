@@ -9,6 +9,8 @@ datasource db {
   url      = "postgresql://root:password@db:5432/village"
 }
 
+//yarn prisma migrate dev --name add-combat-state --schema=services/village/prisma/schema.prisma
+
 enum BuildingType {
   SAWMILL
   CLAY_PIT

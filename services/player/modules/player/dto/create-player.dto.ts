@@ -20,7 +20,7 @@ export class CreatePlayerDto {
 
   @ApiProperty({
     description: 'UUID of the race this player belongs to',
-    example: 'a1b2c3d4-e5f6-7890-1234-56789abcdef0',
+    example: 'HUMAN',
   })
   @IsString()
   race: string;

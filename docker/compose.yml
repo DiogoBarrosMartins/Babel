@@ -44,8 +44,7 @@ services:
     working_dir: /app
     command: >
       sh -c "yarn prisma generate --schema=services/player/prisma/schema.prisma &&
-             yarn prisma migrate reset --force --schema=services/player/prisma/schema.prisma &&
-             yarn prisma migrate dev --name init --schema=services/player/prisma/schema.prisma &&
+      
              yarn start:player:dev"
     env_file:
       - ../services/player/.env
@@ -91,7 +90,6 @@ services:
     working_dir: /app
     command: >
      sh -c "yarn prisma generate --schema=services/combat/prisma/schema.prisma &&
-             yarn prisma migrate reset --force --schema=services/combat/prisma/schema.prisma &&
              yarn prisma migrate dev --name init --schema=services/combat/prisma/schema.prisma &&
              yarn start:combat:dev"
     env_file:
@@ -107,7 +105,6 @@ services:
     working_dir: /app
     command: >
      sh -c "yarn prisma generate --schema=services/world/prisma/schema.prisma &&
-        yarn prisma migrate reset --force --schema=services/world/prisma/schema.prisma &&
              yarn prisma migrate dev --name init --schema=services/world/prisma/schema.prisma &&
              yarn start:world:dev"
     env_file:
