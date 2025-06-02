@@ -6,7 +6,6 @@ import {
 import { CreateVillageDto } from './dto/create-village.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { KafkaService } from '../../../../libs/kafka/kafka.service';
-import { v4 as uuidv4 } from 'uuid';
 import { Village } from '@prisma/client';
 import { ResourceService } from '../resource/resource.service';
 import { BuildingService } from '../building/building.service';
@@ -20,10 +19,12 @@ export class VillageService {
     private readonly kafka: KafkaService,
     private readonly resourceService: ResourceService,
     private readonly buildingService: BuildingService,
-  ) {}
+  ) {
+    console.log('[VillageService] Constructed');
+  }
 
   async create(dto: CreateVillageDto) {
-    const requestId = uuidv4();
+    console.log('[VillageService] Creating village with DTO:', dto);
 
     await this.kafka.emit('world.village-tile.requested', {
       race: dto.race,
@@ -31,9 +32,8 @@ export class VillageService {
       playerName: dto.playerName,
       name: dto.name,
     });
-    console.log(
-      `Tile request sent for player ${dto.playerName} with request ID ${requestId}`,
-    );
+
+    console.log('[VillageService] Emitted world.village-tile.requested');
     return { message: 'Tile request sent. Awaiting world service response.' };
   }
 
@@ -45,6 +45,7 @@ export class VillageService {
     name: string;
     race: string;
   }) {
+    console.log('[VillageService] Handling tile allocation:', data);
     const existingVillage = await this.prisma.village.findFirst({
       where: {
         playerId: data.playerId,
@@ -54,9 +55,7 @@ export class VillageService {
     });
 
     if (existingVillage) {
-      console.warn(
-        `Village already exists at (${data.x}, ${data.y}) for player ${data.playerId}`,
-      );
+      console.warn('[VillageService] Village already exists:', existingVillage);
       return existingVillage;
     }
 
@@ -67,7 +66,6 @@ export class VillageService {
         x: data.x,
         y: data.y,
         name: data.name,
-
         resourceAmounts: {
           food: 500,
           wood: 500,
@@ -84,10 +82,14 @@ export class VillageService {
       },
     });
 
+    console.log('[VillageService] Village created in DB:', village);
+
     await this.buildingService.initializeBuildingsForVillage(
       village.id,
       data.race,
     );
+    console.log('[VillageService] Buildings initialized');
+
     await this.kafka.emit('village.created', {
       id: village.id,
       name: village.name,
@@ -95,23 +97,23 @@ export class VillageService {
       x: village.x,
       y: village.y,
     });
-
-    console.log(
-      `Village ${village.name} created at (${village.x}, ${village.y}) for player ${village.playerId}`,
-    );
+    console.log('[VillageService] Emitted village.created');
 
     return village;
   }
 
   findAll() {
+    console.log('[VillageService] findAll called');
     return this.prisma.village.findMany();
   }
 
   async findByPlayer(playerId: string): Promise<Village[]> {
+    console.log('[VillageService] Finding villages for player:', playerId);
     const villages = await this.prisma.village.findMany({
       where: { playerId },
     });
     if (villages.length === 0) {
+      console.warn('[VillageService] No villages found for player:', playerId);
       throw new NotFoundException(`No villages found for player ${playerId}`);
     }
 
@@ -133,13 +135,16 @@ export class VillageService {
   }
 
   async remove(id: string) {
+    console.log('[VillageService] Removing village with ID:', id);
     await this.prisma.village.delete({ where: { id } });
     await this.kafka.emit('village.deleted', { id });
+    console.log('[VillageService] Emitted village.deleted');
     return { message: `Village ${id} deleted` };
   }
 
   async handleCombatUpdate(payload: {
-    villageId: string;
+    villageId?: string;
+    coords?: { x: number; y: number };
     combat: {
       type: 'incoming' | 'outgoing';
       battleId: string;
@@ -151,23 +156,40 @@ export class VillageService {
       [key: string]: any;
     };
   }) {
-    const { villageId, combat } = payload;
+    console.log('[VillageService] Handling combat update:', payload);
+    const { villageId, coords, combat } = payload;
 
-    const village = await this.prisma.village.findUniqueOrThrow({
-      where: { id: villageId },
-    });
+    const village = villageId
+      ? await this.prisma.village.findUniqueOrThrow({
+          where: { id: villageId },
+        })
+      : await this.prisma.village.findFirstOrThrow({
+          where: { x: coords.x, y: coords.y },
+        });
 
     const state = village.combatState || { outgoing: [], incoming: [] };
+
+    // 🔒 Ocultar tropas se for ataque incoming
+    if (combat.type === 'incoming') {
+      delete combat.troops;
+    }
 
     state[combat.type] ??= [];
     state[combat.type].push(combat);
 
     await this.prisma.village.update({
-      where: { id: villageId },
+      where: { id: village.id },
       data: { combatState: state },
     });
+
+    console.log(
+      `[VillageService] Combat state updated for ${combat.type} village`,
+      village.id,
+    );
   }
+
   async getVillageDetails(villageId: string) {
+    console.log('[VillageService] Fetching village details for ID:', villageId);
     const village = await this.prisma.village.findUnique({
       where: { id: villageId },
       include: {
@@ -175,8 +197,12 @@ export class VillageService {
       },
     });
 
-    if (!village) throw new NotFoundException(`Village ${villageId} not found`);
+    if (!village) {
+      console.warn('[VillageService] Village not found:', villageId);
+      throw new NotFoundException(`Village ${villageId} not found`);
+    }
 
+    console.log('[VillageService] Returning village details:', village);
     return {
       id: village.id,
       x: village.x,
@@ -200,6 +226,7 @@ export class VillageService {
     troops: { troopType: string; quantity: number }[];
     arrivalTime: string;
   }) {
+    console.log('[VillageService] Creating army movement:', payload);
     await this.prisma.armyMovement.create({
       data: {
         villageId: payload.villageId,
@@ -218,16 +245,20 @@ export class VillageService {
       `✅ Movimento ${payload.direction} registado para vila ${payload.villageId}`,
     );
   }
+
   async validateBattleRequest(dto: AttackRequestDto) {
+    console.log('[VillageService] Validating battle request:', dto);
     const village = await this.getVillageDetails(dto.attackerVillageId);
 
     if (village.x !== dto.origin.x || village.y !== dto.origin.y) {
+      console.warn('[VillageService] Invalid origin coordinates');
       throw new BadRequestException('Origem inválida');
     }
 
     for (const req of dto.troops) {
       const vTroop = village.troops.find((t) => t.troopType === req.troopType);
       if (!vTroop || vTroop.quantity < req.quantity) {
+        console.warn('[VillageService] Tropas insuficientes:', req);
         throw new BadRequestException(`Tropas insuficientes: ${req.troopType}`);
       }
     }
@@ -240,6 +271,7 @@ export class VillageService {
     };
 
     await this.kafka.emit('combat.battle.validated', validated);
+    console.log('[VillageService] Emitted combat.battle.validated');
     return { status: 'VALIDATED' };
   }
 }

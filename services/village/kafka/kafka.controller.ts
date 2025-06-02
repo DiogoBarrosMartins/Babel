@@ -5,27 +5,42 @@ import { CreateVillageDto } from '../modules/village/dto/create-village.dto';
 
 @Controller()
 export class KafkaController {
-  constructor(private readonly svc: VillageService) {}
+  constructor(private readonly svc: VillageService) {
+    console.log('[KafkaController] Constructed');
+  }
 
   @MessagePattern('player.created')
   handlePlayerCreated(@Payload() payload: CreateVillageDto) {
-    console.log('Player created event received:', payload);
-    return this.svc.create(payload);
+    console.log('[KafkaController] Received player.created', payload);
+    const result = this.svc.create(payload);
+    console.log('[KafkaController] create result:', result);
+    return result;
   }
 
   @MessagePattern('player.allocated')
   async handleTileAllocated(@Payload() payload: any) {
-    console.log('Player created event received:', payload);
-    return this.svc.handleTileAllocated(payload);
+    console.log('[KafkaController] Received player.allocated', payload);
+    const result = await this.svc.handleTileAllocated(payload);
+    console.log('[KafkaController] handleTileAllocated result:', result);
+    return result;
   }
+
   @MessagePattern('village.combat.updated')
   async handleCombatUpdated(@Payload() payload: any) {
-    return this.svc.handleCombatUpdate(payload);
+    console.log('[KafkaController] Received village.combat.updated', payload);
+    const result = await this.svc.handleCombatUpdate(payload);
+    console.log('[KafkaController] handleCombatUpdate result:', result);
+    return result;
   }
+
   @MessagePattern('village.get.details')
   async handleGetVillageDetails(@Payload() villageId: string) {
-    return this.svc.getVillageDetails(villageId);
+    console.log('[KafkaController] Received village.get.details', villageId);
+    const result = await this.svc.getVillageDetails(villageId);
+    console.log('[KafkaController] getVillageDetails result:', result);
+    return result;
   }
+
   @MessagePattern('village.movement.create')
   async handleCreateArmyMovement(
     @Payload()
@@ -41,10 +56,17 @@ export class KafkaController {
       arrivalTime: string;
     },
   ) {
-    return this.svc.createArmyMovement(payload);
+    console.log('[KafkaController] Received village.movement.create', payload);
+    const result = await this.svc.createArmyMovement(payload);
+    console.log('[KafkaController] createArmyMovement result:', result);
+    return result;
   }
+
   @MessagePattern('combat.battle.requested')
   async handleBattleRequest(@Payload() dto: any) {
-    return this.svc.validateBattleRequest(dto);
+    console.log('[KafkaController] Received combat.battle.requested', dto);
+    const result = await this.svc.validateBattleRequest(dto);
+    console.log('[KafkaController] validateBattleRequest result:', result);
+    return result;
   }
 }

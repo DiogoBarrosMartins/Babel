@@ -48,7 +48,7 @@ model Village {
   troops               Troop[]          @relation("VillageTroops")
   trainingTasks        TrainingTask[]   @relation("VillageTrainingTasks")
 
-  combatState            Json?  
+  combatState            Json  @default("{}")
 }
 
 model Building {
