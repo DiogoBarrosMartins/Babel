@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateVillageDto } from './dto/create-village.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { KafkaService } from '../../../../libs/kafka/kafka.service';
@@ -6,6 +10,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { Village } from '@prisma/client';
 import { ResourceService } from '../resource/resource.service';
 import { BuildingService } from '../building/building.service';
+import { ValidatedBattlePayload } from '../../../../libs/types/combat-type';
+import { AttackRequestDto } from '../../../combat/modules/combat/dto/attack-request.dto';
 
 @Injectable()
 export class VillageService {
@@ -160,5 +166,80 @@ export class VillageService {
       where: { id: villageId },
       data: { combatState: state },
     });
+  }
+  async getVillageDetails(villageId: string) {
+    const village = await this.prisma.village.findUnique({
+      where: { id: villageId },
+      include: {
+        troops: true,
+      },
+    });
+
+    if (!village) throw new NotFoundException(`Village ${villageId} not found`);
+
+    return {
+      id: village.id,
+      x: village.x,
+      y: village.y,
+      playerId: village.playerId,
+      troops: village.troops.map((t) => ({
+        troopType: t.troopType,
+        quantity: t.quantity,
+      })),
+    };
+  }
+
+  async createArmyMovement(payload: {
+    villageId: string;
+    direction: 'incoming' | 'outgoing';
+    battleId: string;
+    originX: number;
+    originY: number;
+    targetX: number;
+    targetY: number;
+    troops: { troopType: string; quantity: number }[];
+    arrivalTime: string;
+  }) {
+    await this.prisma.armyMovement.create({
+      data: {
+        villageId: payload.villageId,
+        direction: payload.direction,
+        battleId: payload.battleId,
+        originX: payload.originX,
+        originY: payload.originY,
+        targetX: payload.targetX,
+        targetY: payload.targetY,
+        troops: payload.troops,
+        arrivalTime: new Date(payload.arrivalTime),
+      },
+    });
+
+    console.log(
+      `✅ Movimento ${payload.direction} registado para vila ${payload.villageId}`,
+    );
+  }
+  async validateBattleRequest(dto: AttackRequestDto) {
+    const village = await this.getVillageDetails(dto.attackerVillageId);
+
+    if (village.x !== dto.origin.x || village.y !== dto.origin.y) {
+      throw new BadRequestException('Origem inválida');
+    }
+
+    for (const req of dto.troops) {
+      const vTroop = village.troops.find((t) => t.troopType === req.troopType);
+      if (!vTroop || vTroop.quantity < req.quantity) {
+        throw new BadRequestException(`Tropas insuficientes: ${req.troopType}`);
+      }
+    }
+
+    const validated: ValidatedBattlePayload = {
+      attackerVillageId: dto.attackerVillageId,
+      origin: dto.origin,
+      target: dto.target,
+      troops: dto.troops,
+    };
+
+    await this.kafka.emit('combat.battle.validated', validated);
+    return { status: 'VALIDATED' };
   }
 }

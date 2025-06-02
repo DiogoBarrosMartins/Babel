@@ -81,7 +81,7 @@ services:
     env_file:
       - ../services/vote/.env
     ports:
-      - 3007:3007
+      - 3008:3008
 
   combat:
     build:
@@ -97,7 +97,7 @@ services:
     env_file:
       - ../services/combat/.env
     ports:
-      - 3008:3008
+      - 3007:3007
 
   world:
     build:

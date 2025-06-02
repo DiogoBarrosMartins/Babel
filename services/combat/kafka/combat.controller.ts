@@ -2,18 +2,19 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CombatService } from '../modules/combat/combat.service';
 import { AttackRequestDto } from '../modules/combat/dto/attack-request.dto';
+import { ValidatedBattlePayload } from '../../../libs/types/combat-type';
 
 @Controller()
 export class CombatController {
   constructor(private readonly combatService: CombatService) {}
 
-  @MessagePattern('combat.attack.requested')
-  async handleAttackRequested(@Payload() payload: AttackRequestDto) {
-    console.log('⚔️ Attack requested:', payload);
-    return this.combatService.registerBattle(payload);
+  @MessagePattern('combat.attack.initiate')
+  async handleInitiateAttack(@Payload() dto: AttackRequestDto) {
+    return this.combatService.initiateAttack(dto);
   }
-  @MessagePattern('combat.battles.forVillage')
-  async handleGetBattlesForVillage(@Payload() villageId: string) {
-    return this.combatService.getBattlesForVillage(villageId);
+
+  @MessagePattern('combat.battle.validated')
+  async handleBattleValidated(@Payload() payload: ValidatedBattlePayload) {
+    return this.combatService.processValidatedBattle(payload);
   }
 }

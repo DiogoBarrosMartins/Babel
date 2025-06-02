@@ -22,4 +22,29 @@ export class KafkaController {
   async handleCombatUpdated(@Payload() payload: any) {
     return this.svc.handleCombatUpdate(payload);
   }
+  @MessagePattern('village.get.details')
+  async handleGetVillageDetails(@Payload() villageId: string) {
+    return this.svc.getVillageDetails(villageId);
+  }
+  @MessagePattern('village.movement.create')
+  async handleCreateArmyMovement(
+    @Payload()
+    payload: {
+      villageId: string;
+      direction: 'incoming' | 'outgoing';
+      battleId: string;
+      originX: number;
+      originY: number;
+      targetX: number;
+      targetY: number;
+      troops: { troopType: string; quantity: number }[];
+      arrivalTime: string;
+    },
+  ) {
+    return this.svc.createArmyMovement(payload);
+  }
+  @MessagePattern('combat.battle.requested')
+  async handleBattleRequest(@Payload() dto: any) {
+    return this.svc.validateBattleRequest(dto);
+  }
 }

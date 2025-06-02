@@ -10,7 +10,7 @@ async function bootstrap() {
   const configService = httpApp.get(ConfigService);
   const kafkaBroker = configService.getOrThrow<string>('KAFKA_BROKER');
   const kafkaGroup = configService.getOrThrow<string>('KAFKA_GROUP');
-  const port = configService.get<number>('APP_PORT') || 3005;
+  const port = configService.get<number>('APP_PORT');
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Combat Service')

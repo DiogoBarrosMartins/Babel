@@ -116,3 +116,16 @@ model TrainingTask {
   Troop        Troop    @relation(fields: [troopId], references: [id])
   Village      Village  @relation("VillageTrainingTasks", fields: [villageId], references: [id])
 }
+model ArmyMovement {
+  id          String   @id @default(uuid())
+  villageId   String
+  direction   String   // 'incoming' | 'outgoing'
+  battleId    String
+  originX     Int
+  originY     Int
+  targetX     Int
+  targetY     Int
+  troops      Json     // Ex: [{ troopType: "orc_grunt", quantity: 10 }]
+  arrivalTime DateTime
+  createdAt   DateTime @default(now())
+}

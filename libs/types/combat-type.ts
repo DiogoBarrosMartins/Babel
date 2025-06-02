@@ -19,3 +19,9 @@ export interface BattleReportPayload {
   loot: CombatLoot;
   notes?: string;
 }
+export interface ValidatedBattlePayload {
+  attackerVillageId: string;
+  origin: { x: number; y: number };
+  target: { x: number; y: number };
+  troops: { troopType: string; quantity: number }[];
+}

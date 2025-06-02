@@ -1,15 +1,22 @@
-import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { Body, Controller, Post } from '@nestjs/common';
 import { CombatService } from './combat.service';
 import { AttackRequestDto } from './dto/attack-request.dto';
+import { ApiOperation, ApiResponse, ApiTags, ApiBody } from '@nestjs/swagger';
 
+@ApiTags('Combat')
 @Controller()
 export class CombatController {
   constructor(private readonly combatService: CombatService) {}
 
-  @MessagePattern('combat.attack.requested')
-  async handleAttackRequested(@Payload() payload: AttackRequestDto) {
-    console.log('⚔️ Attack requested:', payload);
-    return this.combatService.registerBattle(payload);
+  @Post('attack')
+  @ApiOperation({ summary: 'Trigger an attack from a village' })
+  @ApiBody({ type: AttackRequestDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Attack event emitted successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Validation failed' })
+  async triggerAttack(@Body() payload: AttackRequestDto) {
+    return this.combatService.initiateAttack(payload);
   }
 }

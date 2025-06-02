@@ -1,4 +1,4 @@
-import { BuildingType } from '@prisma/client';
+import { BuildingType } from '../types/building-type';
 import { Race } from './race-type';
 
 export type TroopTier = 'Basic' | 'Advanced' | 'Elite';
