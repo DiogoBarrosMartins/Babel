@@ -31,7 +31,15 @@ export class CombatService {
       '[CombatService] [processValidatedBattle] Started with payload:',
       payload,
     );
-    const { attackerVillageId, origin, target, troops } = payload;
+    const { attackerVillageId, origin, target, troops, defenderVillageId } =
+      payload;
+
+    if (!defenderVillageId) {
+      console.warn(
+        `[CombatService] [processValidatedBattle] No defender village ID provided`,
+      );
+      throw new Error('No defender village found at target coordinates');
+    }
 
     const dx = target.x - origin.x;
     const dy = target.y - origin.y;
@@ -61,32 +69,13 @@ export class CombatService {
       arrivalTime,
     );
 
-    // 🔍 Procurar vila defensora pelas coordenadas
-    const defenderVillage = await this.prisma.village.findFirst({
-      where: {
-        x: target.x,
-        y: target.y,
-      },
-    });
-    console.log(
-      '[CombatService] [processValidatedBattle] Defender village lookup result:',
-      defenderVillage,
-    );
-
-    if (!defenderVillage) {
-      console.warn(
-        `[CombatService] [processValidatedBattle] No defender village at (${target.x}, ${target.y})`,
-      );
-      throw new Error('No defender village found at target coordinates');
-    }
-
     console.log(
       '[CombatService] [processValidatedBattle] Creating battle in DB',
     );
     const createdBattle = await this.prisma.battle.create({
       data: {
         attackerVillageId,
-        defenderVillageId: defenderVillage.id,
+        defenderVillageId,
         originX: origin.x,
         originY: origin.y,
         targetX: target.x,
@@ -136,7 +125,7 @@ export class CombatService {
       '[CombatService] [processValidatedBattle] Battle resolution queued',
     );
 
-    const baseCombatData = {
+    const attackerCombatData = {
       id: battleId,
       originX: origin.x,
       originY: origin.y,
@@ -147,17 +136,27 @@ export class CombatService {
       troops,
     };
 
+    const defenderCombatData = {
+      id: battleId,
+      originX: origin.x,
+      originY: origin.y,
+      targetX: target.x,
+      targetY: target.y,
+      startTime: now,
+      arrivalTime,
+    };
+
     await this.kafka.emit('village.combat.updated', {
       villageId: attackerVillageId,
-      combat: { type: 'outgoing', ...baseCombatData },
+      combat: { type: 'outgoing', ...attackerCombatData },
     });
     console.log(
       '[CombatService] [processValidatedBattle] Emitted village.combat.updated for attacker',
     );
 
     await this.kafka.emit('village.combat.updated', {
-      coords: { x: target.x, y: target.y },
-      combat: { type: 'incoming', ...baseCombatData },
+      villageId: defenderVillageId,
+      combat: { type: 'incoming', ...defenderCombatData },
     });
     console.log(
       '[CombatService] [processValidatedBattle] Emitted village.combat.updated for defender',

@@ -169,7 +169,6 @@ export class VillageService {
 
     const state = village.combatState || { outgoing: [], incoming: [] };
 
-    // 🔒 Ocultar tropas se for ataque incoming
     if (combat.type === 'incoming') {
       delete combat.troops;
     }
@@ -263,11 +262,16 @@ export class VillageService {
       }
     }
 
+    const targetVillage = await this.prisma.village.findFirst({
+      where: { x: dto.target.x, y: dto.target.y },
+    });
+
     const validated: ValidatedBattlePayload = {
       attackerVillageId: dto.attackerVillageId,
       origin: dto.origin,
       target: dto.target,
       troops: dto.troops,
+      defenderVillageId: targetVillage.id,
     };
 
     await this.kafka.emit('combat.battle.validated', validated);

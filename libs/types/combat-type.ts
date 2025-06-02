@@ -24,4 +24,5 @@ export interface ValidatedBattlePayload {
   origin: { x: number; y: number };
   target: { x: number; y: number };
   troops: { troopType: string; quantity: number }[];
+  defenderVillageId: string;
 }
