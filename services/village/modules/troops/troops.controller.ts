@@ -17,16 +17,16 @@ export class TroopsController {
   constructor(private readonly troopService: TroopService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Inicia o treino de tropas numa vila' })
+  @ApiOperation({ summary: 'Start a troop training' })
   @ApiParam({
     name: 'villageId',
-    description: 'UUID da vila onde as tropas serão treinadas',
+    description: 'UUID of the village ',
     type: 'string',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @ApiBody({ type: CreateTroopDto })
   @ApiCreatedResponse({
-    description: 'Tarefa de treino criada com sucesso',
+    description: 'Success',
     schema: {
       example: {
         taskId: '550e8400-e29b-41d4-a716-446655440000',
@@ -35,10 +35,10 @@ export class TroopsController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Dados inválidos (troopType desconhecido ou count inválido)',
+    description: 'Invalid troop type',
   })
   @ApiNotFoundResponse({
-    description: 'Vila não encontrada',
+    description: 'No village',
   })
   async trainTroops(
     @Param('villageId', new ParseUUIDPipe()) villageId: string,

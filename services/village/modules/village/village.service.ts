@@ -241,26 +241,29 @@ export class VillageService {
     });
 
     console.log(
-      `✅ Movimento ${payload.direction} registado para vila ${payload.villageId}`,
+      `✅ Movement ${payload.direction} Registered for village ${payload.villageId}`,
     );
   }
 
   async validateBattleRequest(dto: AttackRequestDto) {
     console.log('[VillageService] Validating battle request:', dto);
+
     const village = await this.getVillageDetails(dto.attackerVillageId);
 
     if (village.x !== dto.origin.x || village.y !== dto.origin.y) {
       console.warn('[VillageService] Invalid origin coordinates');
-      throw new BadRequestException('Origem inválida');
+      throw new BadRequestException('Invalid Origin');
     }
 
     for (const req of dto.troops) {
       const vTroop = village.troops.find((t) => t.troopType === req.troopType);
       if (!vTroop || vTroop.quantity < req.quantity) {
-        console.warn('[VillageService] Tropas insuficientes:', req);
-        throw new BadRequestException(`Tropas insuficientes: ${req.troopType}`);
+        console.warn('[VillageService] Insuficient Troops:', req);
+        throw new BadRequestException(`Insuficient Troops: ${req.troopType}`);
       }
     }
+
+    await this.reserveTroopsForBattle(dto.attackerVillageId, dto.troops);
 
     const targetVillage = await this.prisma.village.findFirst({
       where: { x: dto.target.x, y: dto.target.y },
@@ -276,6 +279,55 @@ export class VillageService {
 
     await this.kafka.emit('combat.battle.validated', validated);
     console.log('[VillageService] Emitted combat.battle.validated');
+
     return { status: 'VALIDATED' };
+  }
+  private async reserveTroopsForBattle(
+    villageId: string,
+    troops: { troopType: string; quantity: number }[],
+  ) {
+    console.log('[VillageService] Reserving troops for battle:', {
+      villageId,
+      troops,
+    });
+
+    for (const req of troops) {
+      await this.prisma.troop.updateMany({
+        where: {
+          villageId,
+          troopType: req.troopType,
+          status: 'idle',
+        },
+        data: {
+          quantity: { decrement: req.quantity },
+        },
+      });
+
+      const existing = await this.prisma.troop.findFirst({
+        where: {
+          villageId,
+          troopType: req.troopType,
+          status: 'on_route',
+        },
+      });
+
+      if (existing) {
+        await this.prisma.troop.update({
+          where: { id: existing.id },
+          data: {
+            quantity: { increment: req.quantity },
+          },
+        });
+      } else {
+        await this.prisma.troop.create({
+          data: {
+            villageId,
+            troopType: req.troopType,
+            quantity: req.quantity,
+            status: 'on_route',
+          },
+        });
+      }
+    }
   }
 }
