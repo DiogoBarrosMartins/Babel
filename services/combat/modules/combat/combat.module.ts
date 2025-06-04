@@ -1,4 +1,3 @@
-// combat.module.ts
 import { Module } from '@nestjs/common';
 import { CombatService } from './combat.service';
 import { CombatQueueService } from './combat.queue.service';

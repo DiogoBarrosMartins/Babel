@@ -4,16 +4,22 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Processor('training')
 export class TrainingProcessor {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   @Process('finishTraining')
   async handleFinishTraining(
     job: Job<{ taskId: string; buildTimeMs: number }>,
   ) {
     const { taskId, buildTimeMs } = job.data;
+
     const task = await this.prisma.trainingTask.findUniqueOrThrow({
       where: { id: taskId },
     });
+
+    if (task.status !== 'in_progress') {
+      console.warn(`[Processor] Task ${taskId} is not active. Skipping.`);
+      return;
+    }
 
     await this.prisma.troop.update({
       where: { id: task.troopId },
@@ -33,7 +39,7 @@ export class TrainingProcessor {
     });
 
     if (remaining > 0) {
-      await job.queue.add(
+      const jobNext = await job.queue.add(
         'finishTraining',
         { taskId, buildTimeMs },
         {
@@ -42,6 +48,12 @@ export class TrainingProcessor {
           backoff: { type: 'fixed', delay: 1000 },
         },
       );
+
+      await this.prisma.trainingTask.update({
+        where: { id: taskId },
+        data: { queueJobId: jobNext.id.toString() },
+      });
+
       return;
     }
 

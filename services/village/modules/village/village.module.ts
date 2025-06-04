@@ -8,6 +8,7 @@ import { ResourceModule } from '../resource/resource.module';
 import { BuildingModule } from '../building/building.module';
 import { ConstructionModule } from '../construction/construction.module';
 import { TroopModule } from '../troops/troops.module';
+import { TrainingModule } from '../training/training.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { TroopModule } from '../troops/troops.module';
     KafkaModule,
     PrismaModule,
     TroopModule,
+    TrainingModule,
   ],
   controllers: [VillageController],
   providers: [VillageService],

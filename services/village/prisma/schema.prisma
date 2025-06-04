@@ -97,7 +97,8 @@ model Troop {
 
   Village      Village         @relation("VillageTroops", fields: [villageId], references: [id])
   trainingTasks TrainingTask[]
-  @@unique([villageId, troopType], name: "villageId_troopType")
+  @@unique([villageId, troopType, status], name: "villageId_troopType_status")
+
 }
 
 model TrainingTask {
