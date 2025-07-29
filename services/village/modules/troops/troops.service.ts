@@ -17,7 +17,9 @@ export class TroopService {
     if (!def) throw new Error(`Troop type "${troopType}" invalid`);
 
     const troop = await this.prisma.troop.upsert({
-      where: { villageId_troopType: { villageId, troopType } },
+      where: {
+        villageId_troopType_status: { villageId, troopType, status: 'idle' },
+      },
       create: {
         villageId,
         troopType,

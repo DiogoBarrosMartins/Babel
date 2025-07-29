@@ -15,7 +15,7 @@ export class TrainingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly trainingQueue: TrainingQueueService,
-  ) { }
+  ) {}
 
   async startTraining(
     villageId: string,
@@ -219,7 +219,6 @@ export class TrainingService {
       `[TrainingService] Started task ${task.id} (1/${task.remaining} x ${task.troopType})`,
     );
   }
-
 
   async triggerNextTaskIfAvailable(villageId: string) {
     const next = await this.prisma.trainingTask.findFirst({
